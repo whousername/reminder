@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testDb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username:
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  liquibase:
+    enabled: true
+    contexts: test
