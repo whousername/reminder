@@ -1,3 +1,22 @@
+server:
+  port: 8080
+
 spring:
+
   application:
     name: Reminder Application
+
+  datasource:
+    username: reminder_user
+    password: reminder_pass
+
+
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  liquibase:
+    enabled: true
+    change-log: db/changelog/master-changelog.xml
+    contexts: prod

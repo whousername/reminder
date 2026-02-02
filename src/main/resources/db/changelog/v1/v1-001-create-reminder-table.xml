@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.21.xsd">
+
+    <changeSet id="v1-1" author="Lopatin Pavel">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="reminder"/>
+            </not>
+        </preConditions>
+        <createTable tableName="reminder">
+
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="varchar(4096)"/>
+            <column name="remind" type="datetime"/>
+            <column name="user_id" type="bigint"/>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="v1-2" author="Lopatin Pavel" context="prod">
+        <preConditions onFail="MARK_RAN">
+            <tableIsEmpty tableName="reminder"/>
+        </preConditions>
+        <loadData tableName="reminder" file="db/reminder-data.csv"/>
+    </changeSet>
+
+    <changeSet id="v1-3" author="Lopatin Pavel" dbms="postgresql">
+        <sql> SELECT setval(
+            'reminder_id_seq',
+            (SELECT MAX(id) FROM reminder)
+            );
+        </sql>
+    </changeSet>
+
+
+</databaseChangeLog>
