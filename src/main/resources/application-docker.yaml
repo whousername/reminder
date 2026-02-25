@@ -4,3 +4,9 @@ spring:
       on-profile: docker
   datasource:
     url: jdbc:postgresql://postgres:5432/reminder
+
+  security:
+    oauth2:
+      resource server:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/reminder

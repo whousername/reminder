@@ -17,7 +17,7 @@ public class ReminderController {
 
     private final ReminderService reminderService;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('reminder_admin') or hasRole('reminder_user')")
     @PostMapping("/reminder/create")
     public ReminderResponse createReminder(
             @RequestBody

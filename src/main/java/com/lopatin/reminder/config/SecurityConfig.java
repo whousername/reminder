@@ -42,12 +42,11 @@ public class SecurityConfig {
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Collection<GrantedAuthority> authorities = new ArrayList<>();
 
-            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
-            if (realmAccess != null && realmAccess.containsKey("roles")) {
-                List<String> roles = (List<String>) realmAccess.get("roles");
-                roles.forEach(role ->
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role))
-                );
+            Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+            if (resourceAccess != null && resourceAccess.containsKey("reminder-api")) { // <- точное имя клиента
+                Map<String, Object> clientRoles = (Map<String, Object>) resourceAccess.get("reminder-api");
+                List<String> roles = (List<String>) clientRoles.get("roles");
+                roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
             }
             return authorities;
         });

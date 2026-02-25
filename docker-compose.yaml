@@ -28,39 +28,40 @@ services:
        #создает named volume docker и подключает к папке :/var/...
 
   keycloak:
+    hostname: keycloak
     image: quay.io/keycloak/keycloak:26.4.5
-    container_name: reminder-keycloak
-    command:
-      - start-dev
+    container_name: keycloak
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import
     ports:
       - "8081:8080"
     environment:
+      - KC_HOSTNAME_STRICT=false
       - KC_DB=postgres
       - KC_DB_URL_HOST=postgres-2
       - KC_DB_URL_PORT=5432
       - KC_DB_USERNAME=keycloak_user
       - KC_DB_PASSWORD=keycloak_pass
+
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=reminder_admin
     depends_on:
       - postgres-2
-    #volumes:
-    #  - ./keycloak:/opt/keycloak/data/import
-     #bind mount: ./корневая папка в проекте:/папка в контейнере для импорта json при старте
-
 
   app:
     build: .
     image: reminder-app:latest
     depends_on:
       - postgres
+      - keycloak
     ports:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
 
 
-volumes:  #создает named volumes если их нет
+volumes:
   reminder_postgres_data:
   keycloak_postgres_data:
 
