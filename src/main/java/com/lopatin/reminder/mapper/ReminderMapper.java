@@ -5,6 +5,7 @@ import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.model.Reminder;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
 
 
 @Component
@@ -19,13 +20,13 @@ public class ReminderMapper {
                 savedEntity.getUser_id()
         );
     }
-    public Reminder dtoToEntity(CreateReminderRequest request) {
+    public Reminder dtoToEntity(CreateReminderRequest request, UUID user_id) {
         return new Reminder(
                 null,
                 request.title(),
                 request.description(),
                 request.remind(),
-                request.user_id()
+                user_id
         );
     }
 

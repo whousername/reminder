@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "reminder")
@@ -32,7 +33,7 @@ public class Reminder {
 
     @Getter
     @Column(name = "user_id", nullable = false)
-    private int user_id;
+    private UUID user_id;
 }
 
 

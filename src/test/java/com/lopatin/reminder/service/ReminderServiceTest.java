@@ -4,6 +4,7 @@ package com.lopatin.reminder.service;
 import com.lopatin.reminder.api.request.CreateReminderRequest;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.mapper.ReminderMapper;
+import com.lopatin.reminder.mapper.UserProvider;
 import com.lopatin.reminder.model.Reminder;
 import com.lopatin.reminder.repo.ReminderRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -28,6 +30,9 @@ public class ReminderServiceTest {
     @Mock
     private ReminderMapper mapper;
 
+    @Mock
+    private UserProvider provider;
+
     @InjectMocks
     private ReminderService reminderService;
 
@@ -40,21 +45,24 @@ public class ReminderServiceTest {
 
         LocalDateTime time = LocalDateTime.parse("2030-03-27T13:31:10");
 
-        Reminder entityBeforeSave = new Reminder(null, "test1", "test1", time, 1);
-        Reminder entityAfterSave = new Reminder(1L, "test1", "test1", time, 1);
-        CreateReminderRequest  reminderRequest = new CreateReminderRequest("test1","test1",time,1);
-        ReminderResponse reminderResponse = new ReminderResponse(1L,"test1","test1",time, 1);
+        UUID user_id = UUID.randomUUID();
+        Reminder entityBeforeSave = new Reminder(null, "test1", "test1", time, user_id);
+        Reminder entityAfterSave = new Reminder(1L, "test1", "test1", time, user_id);
+        CreateReminderRequest reminderRequest = new CreateReminderRequest("test1","test1",time);
+        ReminderResponse reminderResponse = new ReminderResponse(1L,"test1","test1",time, user_id);
 
 
-        when(mapper.dtoToEntity(reminderRequest)).thenReturn(entityBeforeSave);
+        when(provider.getUser_id()).thenReturn(user_id);
+        when(mapper.dtoToEntity(reminderRequest, user_id)).thenReturn(entityBeforeSave);
         when(repo.save(entityBeforeSave)).thenReturn(entityAfterSave);
         when(mapper.entityToResponse(entityAfterSave)).thenReturn(reminderResponse);
 
         ReminderResponse result = reminderService.create(reminderRequest);
 
-        assertEquals(reminderResponse, result); //как тут происходжит сравнение ??
+        assertEquals(reminderResponse, result);
 
-        verify(mapper).dtoToEntity(reminderRequest);
+        verify(provider).getUser_id();
+        verify(mapper).dtoToEntity(reminderRequest, user_id);
         verify(repo).save(entityBeforeSave);
         verify(mapper).entityToResponse(entityAfterSave);
     }

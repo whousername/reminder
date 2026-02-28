@@ -13,7 +13,7 @@ Backend REST API для управления напоминаниями.
 - Spring Data JPA (Hibernate)
 - PostgreSQL
 - Liquibase
-- Spring Security (OAuth2) *TODO*
+- Spring Security (OAuth2)
 - Gradle
 - Docker / Docker Compose
 - JUnit / Mockito
@@ -24,9 +24,9 @@ Backend REST API для управления напоминаниями.
 
 Приложение позволяет:
 - создавать напоминания
-- редактировать напоминания
-- удалять напоминания
-- получать список напоминаний с пагинацией
+- редактировать напоминания *TODO*
+- удалять напоминания *TODO*
+- получать список напоминаний с пагинацией *TODO*
 - выполнять поиск / сортировку / фильтрацию *TODO*
 - отправлять уведомления (email / telegram) *TODO*
 
@@ -41,7 +41,7 @@ Backend REST API для управления напоминаниями.
 | title      | varchar(255)   | Short title                     |
 | description| varchar(4096)  | Full description                |
 | remind_at  | timestamp      | Reminder date and time (ISO)    |
-| user_id    | bigint         | Owner user id                   |
+| user_id    | uuid           | Owner user id                   |
 
 ---
 
@@ -54,21 +54,43 @@ Request body:
 {
   "title": "Test reminder",
   "description": "Description",
-  "remind": "2026-02-27T10:00:00",
-  "userId": 1
+  "remind": "2026-02-27T10:00:00"
 }
 Response:
 {
-  "id": 1,
+  "id": 4,
   "title": "Test reminder",
   "description": "Description",
   "remind": "2026-02-27T10:00:00",
-  "userId": 1
+  "user_id": "75fc1a26-20c3-41c3-98ca-fba20a3ee7e6"
 }
 ```
-
 (Other endpoints: TODO)
 
+## **Keycloak / Authentication**
+
+-   **Realm**  ups automatically with start application by docker-compose.
+
+-   Realm has 3 test users (admin,  test_user1, test_user2).
+
+-   For manual testing API need to get JWT token first.
+
+### Getting JWT from "app-1" Docker-container
+```
+curl -X POST "http://keycloak:8080/realms/reminder/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=reminder-api" \
+  -d "client_secret=lDhUrEuVR5yVC8QizaqGN3zOYxw4484o" \
+  -d "username=admin" \
+  -d "password=admin"
+  ```
+
+
+### Admin console
+```
+http://localhost:8081/admin/master/console/
+```
 
 
 ## Project Structure
@@ -98,6 +120,7 @@ src/main/java
 ## Configuration
 
 Profiles:
+
   - local — run from IDE
   - docker — run inside Docker container
   - test - testing enviroment
@@ -107,6 +130,7 @@ Key configs:
   - Database connection
   - Liquibase migrations
   - Server port
+  - Security / OAuth2 JWT
 
 
 ##  Build & Run
@@ -127,14 +151,13 @@ Key configs:
 ```
 curl -X POST http://localhost:8080/api/v1/reminder/create \
      -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <access_token>" \
      -d '{
         "title": "Test reminder",
         "description": "Description",
-        "remind": "2026-02-27T10:00:00",
-        "user_id": 1
+        "remind": "2026-02-27T10:00:00"
         }'
 ```
-
 
 ## Tests:
 - Unit tests for service layer (JUnit + Mockito)
@@ -144,7 +167,6 @@ curl -X POST http://localhost:8080/api/v1/reminder/create \
 ## Known Limitations / TODO
 
 - Main endpoints and functionality
-- OAuth2 security configuration
 - Notification delivery (email / telegram)
 - Advanced sorting
 - Advanced filtering

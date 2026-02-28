@@ -8,5 +8,4 @@
 
     <include file="v1-001-create-reminder-table.xml" relativeToChangelogFile="true"/>
 
-
 </databaseChangeLog>

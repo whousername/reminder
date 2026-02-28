@@ -24,10 +24,12 @@
 
             <column name="description" type="varchar(4096)"/>
             <column name="remind" type="datetime"/>
-            <column name="user_id" type="bigint"/>
+            <column name="user_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
-    
+
     <changeSet id="v1-2" author="Lopatin Pavel" context="prod">
         <preConditions onFail="MARK_RAN">
             <tableIsEmpty tableName="reminder"/>
@@ -41,6 +43,13 @@
             (SELECT MAX(id) FROM reminder)
             );
         </sql>
+    </changeSet>
+
+    <changeSet id="v1-4-add-index-user-id" author="Lopatin Pavel">
+        <createIndex indexName="idx_reminder_user_id"
+                     tableName="reminder">
+            <column name="user_id"/>
+        </createIndex>
     </changeSet>
 
 
