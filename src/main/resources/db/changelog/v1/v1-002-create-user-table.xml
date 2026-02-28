@@ -1,0 +1,34 @@
+<!--<?xml version="1.0" encoding="UTF-8"?>-->
+<!--<databaseChangeLog-->
+<!--        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"-->
+<!--        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"-->
+<!--        xsi:schemaLocation="-->
+<!--           http://www.liquibase.org/xml/ns/dbchangelog-->
+<!--           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.21.xsd">-->
+
+<!--    -->
+<!--    -->
+<!--    <changeSet id="v1-1" author="Lopatin Pavel">-->
+
+<!--        <preConditions onFail="MARK_RAN">-->
+<!--            <not>-->
+<!--                <tableExists tableName="app_user"/>-->
+<!--            </not>-->
+<!--        </preConditions>-->
+
+<!--        <createTable tableName="app_user">-->
+
+<!--            <column name="id" type="uuid" autoIncrement="true" defaultValueComputed="gen_random_uuid()">-->
+<!--                <constraints nullable="false" primaryKey="true"/>-->
+<!--            </column>-->
+
+<!--            <column name="keycloakId" type="uuid">-->
+<!--                <constraints nullable="false"/>-->
+<!--            </column>-->
+
+<!--        </createTable>-->
+<!--    </changeSet>-->
+
+
+
+<!--</databaseChangeLog>-->

@@ -20,3 +20,4 @@ spring:
     enabled: true
     change-log: db/changelog/master-changelog.xml
     contexts: prod
+

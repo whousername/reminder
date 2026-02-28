@@ -5,3 +5,10 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/reminder
+
+
+  security:
+    oauth2:
+      resource server:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/reminder

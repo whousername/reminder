@@ -8,7 +8,7 @@ public record ReminderResponse(
         String title,
         String description,
         LocalDateTime remind,
-        int user_id
+        java.util.UUID user_id
 
 ) {
 }
