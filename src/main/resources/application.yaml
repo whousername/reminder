@@ -21,3 +21,19 @@ spring:
     change-log: db/changelog/master-changelog.xml
     contexts: prod
 
+
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: reminder-scheduler
+          threadPool:
+            threadCount: 5
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            useProperties: true

@@ -36,6 +36,10 @@ dependencies {
     //DB
     runtimeOnly 'org.postgresql:postgresql'
 
+    //Scheduling
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
+
     //Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 

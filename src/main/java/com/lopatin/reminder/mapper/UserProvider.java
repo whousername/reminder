@@ -10,7 +10,7 @@ import java.util.UUID;
 @Component
 public class UserProvider {
 
-    public  UUID getUser_id(){
+    public UUID getUser_id(){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Jwt jwt = (Jwt) auth.getPrincipal();
         return UUID.fromString(jwt.getSubject());
