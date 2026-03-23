@@ -2,12 +2,12 @@ package com.lopatin.reminder.api.controller;
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
 import com.lopatin.reminder.api.response.ReminderResponse;
+import com.lopatin.reminder.service.UserSettingsService;
 import com.lopatin.reminder.service.ReminderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collections;
 
 
 @RestController
@@ -16,8 +16,14 @@ import java.util.Collections;
 public class ReminderController {
 
     private final ReminderService reminderService;
+    private final UserSettingsService userSettingsService;
 
-    @PreAuthorize("hasRole('reminder_admin') or hasRole('reminder_user')")
+
+    @GetMapping("/api/settings/telegram-link")
+    public String telegramLink(@AuthenticationPrincipal Jwt jwt){
+        return userSettingsService.generateTgLink(jwt.getSubject());
+    }
+
     @PostMapping("/reminder/create")
     public ReminderResponse createReminder(
             @RequestBody

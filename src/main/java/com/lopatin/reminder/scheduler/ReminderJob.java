@@ -1,6 +1,7 @@
 package com.lopatin.reminder.scheduler;
 
 import com.lopatin.reminder.service.NotificationService;
+import lombok.RequiredArgsConstructor;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -14,7 +15,7 @@ import java.util.UUID;
 public class ReminderJob implements Job {
 
     @Autowired
-    private NotificationService notificationService;
+    private NotificationService notificationService; //never assigned
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {

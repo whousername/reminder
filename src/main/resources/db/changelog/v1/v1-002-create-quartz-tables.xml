@@ -6,7 +6,7 @@
            http://www.liquibase.org/xml/ns/dbchangelog
            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.21.xsd">
 
-    <changeSet id="v1-5-quartz-tables" author="Lopatin Pavel">
+    <changeSet id="v1-1-quartz-tables" author="Lopatin Pavel">
         <sqlFile
                 path="../quartz/tables_postgres.sql"
                 relativeToChangelogFile="true"

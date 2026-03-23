@@ -10,7 +10,7 @@ import java.util.Date;
 @Service
 public class ReminderSchedulerService {
 
-    private Scheduler scheduler;
+    private final Scheduler scheduler;
 
     public ReminderSchedulerService(Scheduler scheduler){
         this.scheduler = scheduler;

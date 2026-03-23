@@ -1,26 +1,31 @@
 server:
   port: 8080
 
+telegram:
+  bot:
+    username: "reminderLopAppBot"
+    token: 7711789133:AAHWyUXSQRDberLyCX_ju7Uk9fkiNBcTh6I
+
 spring:
 
   application:
     name: Reminder Application
+
 
   datasource:
     username: reminder_user
     password: reminder_pass
 
 
-
   jpa:
     hibernate:
       ddl-auto: validate
+
 
   liquibase:
     enabled: true
     change-log: db/changelog/master-changelog.xml
     contexts: prod
-
 
 
   quartz:
@@ -37,3 +42,10 @@ spring:
           jobStore:
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
             useProperties: true
+
+
+  springdoc:
+    swagger-ui:
+      path: /swagger-ui.html
+    api-docs:
+      path: /v3/api-docs

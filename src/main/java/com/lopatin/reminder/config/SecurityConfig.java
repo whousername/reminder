@@ -28,8 +28,16 @@ public class SecurityConfig {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+
                 .authorizeHttpRequests(auth ->
-                        auth.anyRequest().authenticated())
+                        auth
+                                .requestMatchers(
+                                        "/swagger-ui.html",
+                                                 "/swagger-ui/**",
+                                                 "/v3/api-docs/**"
+                                ).permitAll()
+                                .anyRequest().authenticated())
+
                 .oauth2ResourceServer(oauth ->
                         oauth.jwt(Customizer.withDefaults()))
                 .build();
@@ -43,7 +51,7 @@ public class SecurityConfig {
             Collection<GrantedAuthority> authorities = new ArrayList<>();
 
             Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
-            if (resourceAccess != null && resourceAccess.containsKey("reminder-api")) { // <- точное имя клиента
+            if (resourceAccess != null && resourceAccess.containsKey("reminder-api")) {
                 Map<String, Object> clientRoles = (Map<String, Object>) resourceAccess.get("reminder-api");
                 List<String> roles = (List<String>) clientRoles.get("roles");
                 roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
