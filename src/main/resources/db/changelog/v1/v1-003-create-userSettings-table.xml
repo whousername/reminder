@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+           http://www.liquibase.org/xml/ns/dbchangelog
+           http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.21.xsd">
+
+    <changeSet id="v1-1-userSettings-table" author="Lopatin Pavel">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_settings_service"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="user_settings_service">
+            <column name="keycloak_user_id" type="varchar">
+                <constraints primaryKey="true" nullable="false"></constraints>
+            </column>
+            <column name="telegram_chat_id" type="varchar"></column>
+            <column name="link_token" type="varchar"></column>
+            <column name="email" type="varchar"></column>
+        </createTable>
+
+    </changeSet>
+
+
+
+</databaseChangeLog>

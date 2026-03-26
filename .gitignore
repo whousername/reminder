@@ -39,6 +39,9 @@ out/
 ##заметки по проекту
 progress.txt
 
+##переменные окружения
+secrets.env
+
 .DS_Store
 .AppleDouble
 .LSOverride

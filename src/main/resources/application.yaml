@@ -1,23 +1,74 @@
 server:
   port: 8080
 
-spring:
+telegram:
+  bot:
+    username: ${TELEGRAM_BOT_USERNAME}
+    token: ${TELEGRAM_BOT_TOKEN}
 
+logging:
+  level:
+    root: INFO
+    com.lopatin.reminder: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: DEBUG
+
+spring:
   application:
     name: Reminder Application
+
 
   datasource:
     username: reminder_user
     password: reminder_pass
 
 
-
   jpa:
     hibernate:
       ddl-auto: validate
+      properties:
+        hibernate:
+          jdbc:
+            time_zone: UTC
+
 
   liquibase:
     enabled: true
     change-log: db/changelog/master-changelog.xml
     contexts: prod
 
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: reminder-scheduler
+          threadPool:
+            threadCount: 5
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            useProperties: true
+
+
+  springdoc:
+    swagger-ui:
+      path: /swagger-ui.html
+    api-docs:
+      path: /v3/api-docs
+
+
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

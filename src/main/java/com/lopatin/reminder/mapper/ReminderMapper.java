@@ -3,8 +3,10 @@ package com.lopatin.reminder.mapper;
 import com.lopatin.reminder.api.request.CreateReminderRequest;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.model.Reminder;
+import com.lopatin.reminder.model.ReminderStatus;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 
@@ -25,8 +27,9 @@ public class ReminderMapper {
                 null,
                 request.title(),
                 request.description(),
-                request.remind(),
-                user_id
+                request.remind().withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime(),
+                user_id,
+                ReminderStatus.PENDING
         );
     }
 
