@@ -42,6 +42,9 @@ dependencies {
     //Telegram-bot
     implementation 'org.telegram:telegrambots-spring-boot-starter:6.9.7.1'
 
+    //Mail-service
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     //Documentation
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 

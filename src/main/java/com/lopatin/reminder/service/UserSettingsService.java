@@ -4,9 +4,12 @@ import com.lopatin.reminder.bot.TelegramProperties;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UserSettingsService {
@@ -22,12 +25,16 @@ public class UserSettingsService {
         entity.setTelegramChatId(chatId);
         entity.setLinkToken(null);
         repo.save(entity);
+        log.info("New telegram chatId={} just linked", chatId);
+
     }
 
 
-    public String generateTgLink(String keycloakId) {
+    public String generateTgLink(Jwt jwt) {
 
         String token = UUID.randomUUID().toString();
+        String email = jwt.getClaimAsString("email");
+        String keycloakId = jwt.getSubject();
 
         UserSettings entity = repo
                 .findById(keycloakId)
@@ -36,8 +43,11 @@ public class UserSettingsService {
                         .build());
 
         entity.setLinkToken(token);
+        entity.setEmail(email);
         repo.save(entity);
 
+        log.info("New Telegram-link just generated for userId={}", entity.getUserId());
         return "https://t.me/" + props.getUsername() + "?start=" + token;
+
     }
 }

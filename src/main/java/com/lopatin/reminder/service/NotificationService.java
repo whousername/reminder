@@ -6,8 +6,10 @@ import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -15,9 +17,12 @@ public class NotificationService {
     private final TelegramService telegramService;
     private final UserSettingsRepository userRepo;
     private final ReminderRepository reminderRepo;
+    private final MailService mailService;
 
 
     public void sendReminder(Long reminderId) {
+
+        log.info("Sending reminder id={}", reminderId);
 
         Reminder reminder = reminderRepo.findById(reminderId)
                 .orElseThrow(()->new RuntimeException("Reminder not found: " + reminderId));
@@ -26,22 +31,40 @@ public class NotificationService {
                 .orElseThrow(()-> new RuntimeException(
                         "User settings with userId=" + reminder.getUser_id() + " not found."));
 
-        String chatId = userSettings
-                .getTelegramChatId();
-        String message = reminder
-                .getTitle() + " | " + reminder.getDescription();
+        boolean sentTg = false;
+        boolean sentMail = false;
 
         try {
-            telegramService.sendTelegram(chatId, message);
-            reminder.setStatus(ReminderStatus.SENT);
-        } catch (Exception e) {
-            reminder.setStatus(ReminderStatus.FAILED);
-            throw e;
-        } finally {
-            reminderRepo.save(reminder);
+            telegramService.sendTelegram(
+                    userSettings.getTelegramChatId(),
+                    "Напоминание: " + reminder.getTitle() +
+                            " | " + reminder.getDescription());
+            sentTg = true;
+        }
+        catch (Exception e) {
+            log.error("Failed to send notification via Telegram for reminderId={} ", reminderId, e);
+        }
+        try{
+            mailService.sendMail(
+                    userSettings.getEmail(),
+                    "Напоминание: " + reminder.getTitle(),
+                    reminder.getDescription());
+            sentMail = true;
+        }
+        catch (Exception e){
+            log.error("Failed to send notification via Email for reminderId={} ", reminderId, e);
         }
 
+        if(sentTg && sentMail){
+            reminder.setStatus(ReminderStatus.SENT);
+        } else if (sentMail || sentTg) {
+            reminder.setStatus(ReminderStatus.PARTIALLY_SENT);
+        } else {
+            reminder.setStatus(ReminderStatus.FAILED);
+        }
 
-        //еще email тут будет
+        reminderRepo.save(reminder);
+
+        log.info("Reminder id={} status={}", reminderId, reminder.getStatus());
     }
 }

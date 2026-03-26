@@ -21,7 +21,7 @@ public class ReminderController {
 
     @GetMapping("/api/settings/telegram-link")
     public String telegramLink(@AuthenticationPrincipal Jwt jwt){
-        return userSettingsService.generateTgLink(jwt.getSubject());
+        return userSettingsService.generateTgLink(jwt);
     }
 
     @PostMapping("/reminder/create")

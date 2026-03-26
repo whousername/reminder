@@ -17,6 +17,7 @@ Backend REST API для управления напоминаниями.
 - Gradle
 - Docker / Docker Compose
 - JUnit / Mockito
+- Quartz Scheduler
 
 ---
 
@@ -28,7 +29,7 @@ Backend REST API для управления напоминаниями.
 - удалять напоминания *TODO*
 - получать список напоминаний с пагинацией *TODO*
 - выполнять поиск / сортировку / фильтрацию *TODO*
-- отправлять уведомления (email / telegram) *TODO*
+- отправлять уведомления (email / telegram)
 
 ---
 
@@ -41,11 +42,24 @@ Backend REST API для управления напоминаниями.
 | title      | varchar(255)   | Short title                     |
 | description| varchar(4096)  | Full description                |
 | remind_at  | timestamp      | Reminder date and time (ISO)    |
-| user_id    | uuid           | Owner user id                   |
+| user_id    | uuid           | Owner user id (Keycloak Id)                   |
+
+---
+### UserSettings
+| Field          | Type            | Description                      |
+|----------------|-----------------|---------------------------
+| userId         | varchar         | Owner user id (Keycloak Id)                |
+| telegramChatId | varchar 		   | User Telegram chat-id                |
+| linkToken      | varchar         | Link token (deep-link)               |
+| email          | varchar         | User email
 
 ---
 
+
+
 ## API Endpoints
+
+> **Note:** All endpoints require a valid JWT token from Keycloak. Use the curl command below to obtain a token.
 
 ### Create reminder
 POST /api/v1/reminder/create
@@ -71,9 +85,13 @@ Response:
 
 -   **Realm**  ups automatically with start application by docker-compose.
 
--   Realm has 3 test users (admin,  test_user1, test_user2).
+-   Realm has 2 test users (test_user1, test_user2).
 
 -   For manual testing API need to get JWT token first.
+
+### Test Users
+- `test_user1` / `test_password1`
+- `test_user2` / `test_password2`
 
 ### Getting JWT from "app-1" Docker-container
 ```
@@ -82,8 +100,8 @@ curl -X POST "http://keycloak:8080/realms/reminder/protocol/openid-connect/token
   -d "grant_type=password" \
   -d "client_id=reminder-api" \
   -d "client_secret=lDhUrEuVR5yVC8QizaqGN3zOYxw4484o" \
-  -d "username=admin" \
-  -d "password=admin"
+  -d "username=test_user1" \
+  -d "password=test_password1" \
   ```
 
 
@@ -92,8 +110,32 @@ curl -X POST "http://keycloak:8080/realms/reminder/protocol/openid-connect/token
 http://localhost:8081/admin/master/console/
 ```
 
+## Scheduler & Notifications
 
-## Project Structure
+### Quartz Scheduler
+- Handles reminder tasks via `ReminderJob` and `ReminderSchedulerService`.
+- Tables created with Liquibase changelog `v1-002-create-quartz-tables.xml`.
+- Misfire handling: tasks delayed >5 min are marked `FAILED`.
+
+### Notifications
+- `NotificationService` sends notifications from Quartz jobs.
+- Supports:
+  - **Telegram**: via `TelegramService` + `ReminderBot` and `UserSettings`.
+  - **Email**: via `MailService`, updates status.
+  -  **Notification statuses**: `PENDING`, `PARTIALLY_SENT`, `SENT`, `FAILED`
+
+### Time Handling
+
+-  **All times are stored and processed in UTC. Enter times in UTC in Swagger or API requests to trigger reminders correctly.**
+- `CreateReminderRequest` uses `OffsetDateTime`, converted to UTC when mapped.
+- Swagger shows UTC; testing must use UTC to trigger reminders correctly.
+
+### Logging
+- Logs key events: job execution, sending notifications, errors/statuses.
+
+
+## Project Structure Skeleton
+### (will be updated soon)
 
 ```
 src/main/java
@@ -167,7 +209,6 @@ curl -X POST http://localhost:8080/api/v1/reminder/create \
 ## Known Limitations / TODO
 
 - Main endpoints and functionality
-- Notification delivery (email / telegram)
 - Advanced sorting
 - Advanced filtering
 - Full API documentation (OpenAPI / Swagger)

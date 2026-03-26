@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lopatin.reminder.api.request.TelegramRequest;
 import com.lopatin.reminder.bot.TelegramProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TelegramService {
@@ -20,6 +22,8 @@ public class TelegramService {
     private final ObjectMapper mapper;
 
     public void sendTelegram(String chatId, String message) {
+
+        log.info("Sending Telegram-notification to chatId={}", chatId);
 
         try {
 

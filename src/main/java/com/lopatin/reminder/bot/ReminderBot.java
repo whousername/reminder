@@ -1,12 +1,14 @@
 package com.lopatin.reminder.bot;
 
 import com.lopatin.reminder.service.UserSettingsService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+@Slf4j
 @Component
 public class ReminderBot extends TelegramLongPollingBot {
 
@@ -27,6 +29,8 @@ public class ReminderBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
 
         if (update.getMessage() == null){return;}
+
+        log.info("New incoming message from chatId={}", update.getMessage().getChatId());
 
         String text = update.getMessage().getText();
         Long chatId = update.getMessage().getChatId();

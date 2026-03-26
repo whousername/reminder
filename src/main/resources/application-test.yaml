@@ -1,3 +1,8 @@
+telegram:
+  bot:
+    username: test
+    token: test
+
 spring:
 
   datasource:
@@ -25,3 +30,12 @@ spring:
       resource server:
         jwt:
           issuer-uri: http://localhost:8081/realms/reminder
+
+
+  quartz:
+    auto-startup: false
+
+  mail:
+    username: test
+    password: test
+

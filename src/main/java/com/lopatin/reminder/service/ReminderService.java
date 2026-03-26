@@ -6,6 +6,7 @@ import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.mapper.UserProvider;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.scheduler.ReminderSchedulerService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -13,6 +14,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ReminderService {
 
@@ -34,24 +36,33 @@ public class ReminderService {
     }
 
 
-
-
     @Transactional
     public ReminderResponse create(CreateReminderRequest request){
 
         UUID user_id = userProvider.getUser_id();
+        log.info("Creating reminder for userId={}", user_id);
+
         var savedReminder = repo.save(mapper.dtoToEntity(request, user_id));
 
-        TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        schedulerService.scheduleReminder(
-                                savedReminder.getId(),
-                                savedReminder.getRemind()
-                        );
-                    }
-                });
+        if(TransactionSynchronizationManager.isSynchronizationActive()){
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            schedulerService
+                                    .scheduleReminder(
+                                    savedReminder.getId(),
+                                    savedReminder.getRemind()
+                            );
+                        }
+                    });
+        } else { //no transaction
+            schedulerService
+                    .scheduleReminder(
+                            savedReminder.getId(),
+                            savedReminder.getRemind());
+        }
+
         return mapper.entityToResponse(savedReminder);
     }
 

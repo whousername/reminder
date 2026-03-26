@@ -3,11 +3,17 @@ server:
 
 telegram:
   bot:
-    username: "reminderLopAppBot"
-    token: 7711789133:AAHWyUXSQRDberLyCX_ju7Uk9fkiNBcTh6I
+    username: ${TELEGRAM_BOT_USERNAME}
+    token: ${TELEGRAM_BOT_TOKEN}
+
+logging:
+  level:
+    root: INFO
+    com.lopatin.reminder: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: DEBUG
 
 spring:
-
   application:
     name: Reminder Application
 
@@ -20,6 +26,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+      properties:
+        hibernate:
+          jdbc:
+            time_zone: UTC
 
 
   liquibase:
@@ -49,3 +59,16 @@ spring:
       path: /swagger-ui.html
     api-docs:
       path: /v3/api-docs
+
+
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true

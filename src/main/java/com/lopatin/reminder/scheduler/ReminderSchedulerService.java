@@ -27,7 +27,7 @@ public class ReminderSchedulerService {
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .startAt(Date.from(remind
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("UTC"))
                         .toInstant()))
                 .withIdentity("trigger: " + id)
                 .build();
