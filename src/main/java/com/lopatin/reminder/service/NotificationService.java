@@ -27,9 +27,9 @@ public class NotificationService {
         Reminder reminder = reminderRepo.findById(reminderId)
                 .orElseThrow(()->new RuntimeException("Reminder not found: " + reminderId));
 
-        UserSettings userSettings = userRepo.findById(reminder.getUser_id().toString())
+        UserSettings userSettings = userRepo.findById(reminder.getUserId().toString())
                 .orElseThrow(()-> new RuntimeException(
-                        "User settings with userId=" + reminder.getUser_id() + " not found."));
+                        "User settings with userId=" + reminder.getUserId() + " not found."));
 
         boolean sentTg = false;
         boolean sentMail = false;

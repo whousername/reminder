@@ -1,3 +1,4 @@
+
 # Reminder Application
 
 Backend REST API для управления напоминаниями.
@@ -25,10 +26,10 @@ Backend REST API для управления напоминаниями.
 
 Приложение позволяет:
 - создавать напоминания
-- редактировать напоминания *TODO*
-- удалять напоминания *TODO*
-- получать список напоминаний с пагинацией *TODO*
-- выполнять поиск / сортировку / фильтрацию *TODO*
+- редактировать напоминания
+- удалять напоминания
+- получать список напоминаний с пагинацией
+- выполнять поиск / сортировку / фильтрацию
 - отправлять уведомления (email / telegram)
 
 ---
@@ -36,22 +37,22 @@ Backend REST API для управления напоминаниями.
 ## Domain Model
 ### Reminder
 
-| Field       | Type           | Description                     |
+| Field       | Type           | Description                    |
 |------------|----------------|---------------------------------|
 | id         | bigint         | Unique identifier               |
 | title      | varchar(255)   | Short title                     |
 | description| varchar(4096)  | Full description                |
 | remind_at  | timestamp      | Reminder date and time (ISO)    |
-| user_id    | uuid           | Owner user id (Keycloak Id)                   |
+| user_id    | uuid           | Owner user id (Keycloak Id)     |
 
 ---
 ### UserSettings
-| Field          | Type            | Description                      |
+| Field          | Type            | Description                 |
 |----------------|-----------------|---------------------------
-| userId         | varchar         | Owner user id (Keycloak Id)                |
-| telegramChatId | varchar 		   | User Telegram chat-id                |
-| linkToken      | varchar         | Link token (deep-link)               |
-| email          | varchar         | User email
+| userId         | varchar         | Owner user id (Keycloak Id) |
+| telegramChatId | varchar        | User Telegram chat-id       |
+| linkToken      | varchar         | Link token (deep-link)      |
+| email          | varchar         | User email                  |
 
 ---
 
@@ -60,6 +61,12 @@ Backend REST API для управления напоминаниями.
 ## API Endpoints
 
 > **Note:** All endpoints require a valid JWT token from Keycloak. Use the curl command below to obtain a token.
+
+### Telegram Bot linking
+1. GET /api/v1/settings/telegram-link — get the link
+2. Follow the link in Telegram
+3. Click Start — the bot will automatically link your chat ID
+
 
 ### Create reminder
 POST /api/v1/reminder/create
@@ -72,14 +79,25 @@ Request body:
 }
 Response:
 {
-  "id": 4,
+  "id":21,
   "title": "Test reminder",
   "description": "Description",
   "remind": "2026-02-27T10:00:00",
-  "user_id": "75fc1a26-20c3-41c3-98ca-fba20a3ee7e6"
+  "user_id": "47dd73a8-724c-432b-ade8-69dc1f512a92"
 }
 ```
-(Other endpoints: TODO)
+
+PATCH /api/v1/reminder/{id}
+
+GET /api/v1/settings/telegram-link
+
+GET /api/v1/reminder/list
+
+DELETE /api/v1/reminder/remove/{id}
+
+## API Documentation
+Full API documentation available via Swagger UI after running the application:
+http://localhost:8080/swagger-ui.html
 
 ## **Keycloak / Authentication**
 
@@ -90,10 +108,11 @@ Response:
 -   For manual testing API need to get JWT token first.
 
 ### Test Users
-- `test_user1` / `test_password1`
+- `test_user1` / `test_password1` (There are 20 test-reminders for this user uploading from csv-file for testing API.)
 - `test_user2` / `test_password2`
 
-### Getting JWT from "app-1" Docker-container
+### Getting JWT from "app-1" Docker-container (for test_user1)
+> **Note:** client_secret is for local test environment only, generated automatically by docker-compose.
 ```
 curl -X POST "http://keycloak:8080/realms/reminder/protocol/openid-connect/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
@@ -101,7 +120,7 @@ curl -X POST "http://keycloak:8080/realms/reminder/protocol/openid-connect/token
   -d "client_id=reminder-api" \
   -d "client_secret=lDhUrEuVR5yVC8QizaqGN3zOYxw4484o" \
   -d "username=test_user1" \
-  -d "password=test_password1" \
+  -d "password=test_password1"
   ```
 
 
@@ -208,10 +227,6 @@ curl -X POST http://localhost:8080/api/v1/reminder/create \
 
 ## Known Limitations / TODO
 
-- Main endpoints and functionality
-- Advanced sorting
-- Advanced filtering
-- Full API documentation (OpenAPI / Swagger)
 - Full unit and integration tests
 
 
