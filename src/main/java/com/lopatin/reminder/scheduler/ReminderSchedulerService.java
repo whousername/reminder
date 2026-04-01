@@ -1,5 +1,6 @@
 package com.lopatin.reminder.scheduler;
 
+import com.lopatin.reminder.exception.ReminderSchedulingException;
 import org.quartz.*;
 import org.springframework.stereotype.Service;
 
@@ -35,14 +36,8 @@ public class ReminderSchedulerService {
         try {
             scheduler.scheduleJob(jobDetail, trigger);
         } catch (SchedulerException e) {
-            throw new RuntimeException("Failed to schedule reminder " + id, e); //надо как то по другому обернуть
+            throw new ReminderSchedulingException(id, e);
 
         }
     }
-
-
-    //надо будет 3 метода ?
-    //    scheduleReminder()
-    //    deleteReminderSchedule()
-    //    rescheduleReminder()
 }

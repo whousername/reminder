@@ -44,6 +44,7 @@ Backend REST API для управления напоминаниями.
 | description| varchar(4096)  | Full description                |
 | remind_at  | timestamp      | Reminder date and time (ISO)    |
 | user_id    | uuid           | Owner user id (Keycloak Id)     |
+| status     | varchar        | PENDING, PARTIALLY_SENT, SENT, FAILED|
 
 ---
 ### UserSettings
@@ -109,7 +110,6 @@ http://localhost:8080/swagger-ui.html
 
 ### Test Users
 - `test_user1` / `test_password1` (There are 20 test-reminders for this user uploading from csv-file for testing API.)
-- `test_user2` / `test_password2`
 
 ### Getting JWT from "app-1" Docker-container (for test_user1)
 > **Note:** client_secret is for local test environment only, generated automatically by docker-compose.
@@ -153,22 +153,47 @@ http://localhost:8081/admin/master/console/
 - Logs key events: job execution, sending notifications, errors/statuses.
 
 
-## Project Structure Skeleton
-### (will be updated soon)
+## Error Handling
 
+All exceptions are handled globally via `@RestControllerAdvice`.
+
+| Status | Cause |
+|--------|-------|
+| 400    | Validation failed or invalid request body |
+| 404    | Reminder or UserSettings not found |
+| 500    | Unexpected server error |
+
+All error responses follow the format:
+```json
+{
+  "message": "Reminder not found: 5",
+  "status": 404
+}
 ```
-src/main/java
- ├── api
- │    ├── controller
- │    ├── request
- │    └── response
- ├── mapper
- ├── model
- │      └── entity
- ├── repo
- └── service
- ```
+- Input validation is enforced on `CreateReminderRequest` and `UpdateDto`
+  via Bean Validation (`@NotBlank`, `@NotNull`, `@Future`, `@Size`).
 
+
+
+
+## Project Structure Skeleton
+```
+  src/main/java
+   ├── api
+   │    ├── controller
+   │    ├── request
+   │    └── response
+   ├── bot
+   ├── config
+   ├── exception
+   ├── mapper
+   ├── model
+   ├── repo
+   ├── scheduler
+   └── service
+        └── specification
+
+ ```
 
 
 ## Database & Migrations
@@ -227,7 +252,7 @@ curl -X POST http://localhost:8080/api/v1/reminder/create \
 
 ## Known Limitations / TODO
 
-- Full unit and integration tests
+- Extended unit and integration test coverage.
 
 
 ## Architecture Notes

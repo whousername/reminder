@@ -3,6 +3,7 @@ package com.lopatin.reminder.service;
 import com.lopatin.reminder.api.request.CreateReminderRequest;
 import com.lopatin.reminder.api.request.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderPageResponse;
+import com.lopatin.reminder.exception.ReminderNotFoundException;
 import com.lopatin.reminder.mapper.ReminderMapper;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.mapper.UserProvider;
@@ -10,7 +11,6 @@ import com.lopatin.reminder.model.Reminder;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.scheduler.ReminderSchedulerService;
 import com.lopatin.reminder.service.specification.ReminderSpec;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -111,7 +110,7 @@ public class ReminderService {
         UUID currentUser = userProvider.getUser_id();
         int deleted = reminderRepo.deleteByIdAndUserId(id, currentUser);
         if(deleted == 0){
-            throw new EntityNotFoundException("Reminder not found or not owned by user, id=" + id);
+            throw new ReminderNotFoundException(id);
         }
         log.info("Reminder={} successfully deleted for userId={}", id, currentUser);
     }
@@ -123,12 +122,9 @@ public class ReminderService {
 
         UUID currentUser = userProvider.getUser_id();
         Reminder reminder = reminderRepo.findByIdAndUserId(id, currentUser)
-                .orElseThrow(() -> new EntityNotFoundException("Reminder not found or not owned by user, id=" + id));
+                .orElseThrow(() -> new ReminderNotFoundException(id));
 
         if (dataToChange.title() != null) {
-            if (dataToChange.title().isBlank()){
-                throw new IllegalArgumentException("Title cannot be blank");
-            }
             reminder.setTitle(dataToChange.title());
         }
         if (dataToChange.description() != null) {

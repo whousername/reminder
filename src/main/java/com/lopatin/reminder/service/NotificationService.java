@@ -1,5 +1,7 @@
 package com.lopatin.reminder.service;
 
+import com.lopatin.reminder.exception.TelegramServiceException;
+import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.model.Reminder;
 import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.model.UserSettings;
@@ -20,39 +22,51 @@ public class NotificationService {
     private final MailService mailService;
 
 
-    public void sendReminder(Long reminderId) {
+    public void sendReminder(Reminder reminder) {
 
-        log.info("Sending reminder id={}", reminderId);
-
-        Reminder reminder = reminderRepo.findById(reminderId)
-                .orElseThrow(()->new RuntimeException("Reminder not found: " + reminderId));
+        log.info("Sending reminder id={}", reminder.getId());
 
         UserSettings userSettings = userRepo.findById(reminder.getUserId().toString())
-                .orElseThrow(()-> new RuntimeException(
-                        "User settings with userId=" + reminder.getUserId() + " not found."));
+                .orElseThrow(()-> new UserSettingsNotFoundException(reminder.getUserId()));
 
         boolean sentTg = false;
         boolean sentMail = false;
 
+        String chatId = userSettings.getTelegramChatId();
+        String mail = userSettings.getEmail();
+
         try {
-            telegramService.sendTelegram(
-                    userSettings.getTelegramChatId(),
-                    "Напоминание: " + reminder.getTitle() +
-                            " | " + reminder.getDescription());
-            sentTg = true;
+            if (chatId == null){
+                log.warn("Telegram chatId is null for reminder={}, skipping.", reminder.getId());
+            }
+            else {
+                telegramService.sendTelegram(
+                        chatId,
+                        "/Напоминание: " + reminder.getTitle() +
+                                " /Подробности: " + reminder.getDescription());
+                sentTg = true;
+            }
+
         }
-        catch (Exception e) {
-            log.error("Failed to send notification via Telegram for reminderId={} ", reminderId, e);
+        catch (TelegramServiceException e) {
+            log.error("Failed to send notification via Telegram for reminderId={} ", reminder.getId(), e);
         }
         try{
-            mailService.sendMail(
-                    userSettings.getEmail(),
-                    "Напоминание: " + reminder.getTitle(),
-                    reminder.getDescription());
-            sentMail = true;
+            if (mail == null){
+                log.warn("User mail is null for reminder={}, skipping.", reminder.getId());
+            }
+            else {
+                mailService.sendMail(
+                        mail,
+                        "/Напоминание: " + reminder.getTitle()  +
+                                " /Подробности: ", reminder.getDescription());
+                sentMail = true;
+            }
+
         }
+
         catch (Exception e){
-            log.error("Failed to send notification via Email for reminderId={} ", reminderId, e);
+            log.error("Failed to send notification via Email for reminderId={} ", reminder.getId(), e);
         }
 
         if(sentTg && sentMail){
@@ -65,6 +79,6 @@ public class NotificationService {
 
         reminderRepo.save(reminder);
 
-        log.info("Reminder id={} status={}", reminderId, reminder.getStatus());
+        log.info("Reminder id={} status={}", reminder.getId(), reminder.getStatus());
     }
 }

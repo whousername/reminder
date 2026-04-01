@@ -33,6 +33,9 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
+    //Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
     //DB
     runtimeOnly 'org.postgresql:postgresql'
 
@@ -46,7 +49,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     //Documentation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
 
     //Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
