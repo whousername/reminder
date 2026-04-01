@@ -1,5 +1,7 @@
 package com.lopatin.reminder.bot;
 
+import com.lopatin.reminder.exception.InvalidLinkTokenException;
+import com.lopatin.reminder.exception.TelegramServiceException;
 import com.lopatin.reminder.service.UserSettingsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -43,8 +45,15 @@ public class ReminderBot extends TelegramLongPollingBot {
             }
 
             String linkToken = parts[1];
-            userSettingsService.linkTelegram(linkToken, chatId.toString());
-            sendMessage(chatId, "Telegram подключен!");
+
+            try {
+                userSettingsService.linkTelegram(linkToken, chatId.toString());
+                sendMessage(chatId, "Telegram подключен!");
+            } catch (InvalidLinkTokenException e) {
+                log.warn("Invalid link token from chatId={}", chatId, e);
+                sendMessage(chatId, "Ссылка недействительна или устарела. Получи новую ссылку.");
+            }
+
 
         }
     }
@@ -57,7 +66,7 @@ public class ReminderBot extends TelegramLongPollingBot {
         try {
             execute(msg);
         } catch (TelegramApiException e) {
-            throw new RuntimeException("Failed to send message: ",e);
+            throw new TelegramServiceException("Failed to send message: ",e);
         }
     }
 

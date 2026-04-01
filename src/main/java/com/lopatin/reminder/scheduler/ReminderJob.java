@@ -1,5 +1,7 @@
 package com.lopatin.reminder.scheduler;
 
+import com.lopatin.reminder.exception.ReminderNotFoundException;
+import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.service.NotificationService;
@@ -28,7 +30,7 @@ public class ReminderJob implements Job {
         );
 
         var reminder = reminderRepo.findById(reminderId)
-                .orElseThrow(() -> new RuntimeException("Reminder not found!"));
+                .orElseThrow(() -> new ReminderNotFoundException(reminderId));
         LocalDateTime remindAt = reminder.getRemind();
 
         //misfire
@@ -39,6 +41,12 @@ public class ReminderJob implements Job {
             return;
         }
 
-        notificationService.sendReminder(reminderId);
+        try {
+            notificationService.sendReminder(reminder);
+        } catch (UserSettingsNotFoundException e) {
+            log.warn("UserSettings not found for reminderId={}, marking as FAILED.", reminderId);
+            reminder.setStatus(ReminderStatus.FAILED);
+            reminderRepo.save(reminder);
+        }
     }
 }

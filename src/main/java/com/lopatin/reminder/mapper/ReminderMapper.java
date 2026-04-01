@@ -19,7 +19,7 @@ public class ReminderMapper {
                 savedEntity.getTitle(),
                 savedEntity.getDescription(),
                 savedEntity.getRemind(),
-                savedEntity.getUser_id()
+                savedEntity.getUserId()
         );
     }
     public Reminder dtoToEntity(CreateReminderRequest request, UUID user_id) {

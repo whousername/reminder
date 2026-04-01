@@ -28,7 +28,7 @@ public class Reminder {
     private LocalDateTime remind;
 
     @Column(name = "user_id", nullable = false)
-    private UUID user_id;
+    private UUID userId;
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)

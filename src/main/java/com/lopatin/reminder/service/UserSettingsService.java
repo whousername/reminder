@@ -1,6 +1,7 @@
 package com.lopatin.reminder.service;
 
 import com.lopatin.reminder.bot.TelegramProperties;
+import com.lopatin.reminder.exception.InvalidLinkTokenException;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class UserSettingsService {
 
     public void linkTelegram(String linkToken, String chatId) {
         UserSettings entity = repo.findByLinkToken(linkToken)
-                        .orElseThrow(() -> new RuntimeException("Недействительный токен."));
+                        .orElseThrow(() -> new InvalidLinkTokenException("Недействительный токен!"));
 
         entity.setTelegramChatId(chatId);
         entity.setLinkToken(null);

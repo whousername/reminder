@@ -3,8 +3,10 @@ package com.lopatin.reminder.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lopatin.reminder.api.request.TelegramRequest;
 import com.lopatin.reminder.bot.TelegramProperties;
+import com.lopatin.reminder.exception.TelegramServiceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpException;
 import org.springframework.stereotype.Service;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -41,11 +43,11 @@ public class TelegramService {
                     .send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                throw new RuntimeException("Telegram error: " + response.body());
+                throw new HttpException("Http error, response status code: " + response.body());
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send Telegram message: ", e);
+            throw new TelegramServiceException("Failed to send Telegram message: ", e);
 
         }
     }
