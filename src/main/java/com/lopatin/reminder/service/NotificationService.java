@@ -9,6 +9,7 @@ import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -62,10 +63,8 @@ public class NotificationService {
                                 " /Подробности: ", reminder.getDescription());
                 sentMail = true;
             }
-
         }
-
-        catch (Exception e){
+        catch (MailException e){
             log.error("Failed to send notification via Email for reminderId={} ", reminder.getId(), e);
         }
 

@@ -2,7 +2,10 @@ package com.lopatin.reminder.service;
 
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
+import com.lopatin.reminder.api.request.UpdateDto;
+import com.lopatin.reminder.api.response.ReminderPageResponse;
 import com.lopatin.reminder.api.response.ReminderResponse;
+import com.lopatin.reminder.exception.ReminderNotFoundException;
 import com.lopatin.reminder.mapper.ReminderMapper;
 import com.lopatin.reminder.mapper.UserProvider;
 import com.lopatin.reminder.model.Reminder;
@@ -15,10 +18,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,12 +50,8 @@ public class ReminderServiceTest {
     @InjectMocks
     private ReminderService reminderService;
 
-    @BeforeEach
-    void setUp() {
-    }
-
     @Test
-    public void reminderService_createReminder_shouldMapSaveAndReturnResponse() {
+    public void createReminder_shouldMapSaveAndReturnResponse() {
 
         OffsetDateTime requestTime = OffsetDateTime.parse(
                 "2030-03-27T13:31:10Z");
@@ -83,4 +89,125 @@ public class ReminderServiceTest {
         verify(mapper).entityToResponse(entityAfterSave);
         verify(reminderSchedulerService).scheduleReminder(1L, localDateTime);
     }
+
+    @Test
+    public void getAllReminders_shouldReturnReminderPageResponse(){
+        String search = "test2";
+        LocalDate dateFrom = LocalDate.parse("2030-01-01");
+        LocalDate dateTo = LocalDate.parse("2030-01-02");
+        LocalDateTime remindDate = LocalDateTime.parse(
+                "2030-01-01T13:30:00");
+
+        int page = 0;
+        int size = 10;
+        Pageable pageable = PageRequest.of(page, size);
+
+        UUID currentUser = UUID.randomUUID();
+
+        Reminder reminder = Reminder.builder()
+                .id(1L)
+                .title("Test2")
+                .remind(remindDate)
+                .userId(currentUser)
+                .status(ReminderStatus.PENDING)
+                .build();
+
+        ReminderResponse reminderResponse = new ReminderResponse(
+                1L,"Test2", null, remindDate,currentUser);
+
+        Page<Reminder> reminderPage = new PageImpl<Reminder>(List.of(reminder));
+
+        when(provider.getUser_id()).thenReturn(currentUser);
+        when(repo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(reminderPage);
+        when(mapper.entityToResponse(any(Reminder.class))).thenReturn(reminderResponse);
+
+        ReminderPageResponse result = reminderService.getAllReminders(search, dateFrom, dateTo, pageable);
+
+        verify(provider).getUser_id();
+        verify(repo).findAll(any(Specification.class), any(Pageable.class));
+        verify(mapper).entityToResponse(any(Reminder.class));
+
+        assertThat(result.current()).contains(reminderResponse);
+    }
+
+    @Test
+    public void removeReminderById_shouldRemoveReminder(){
+        Long id = 1L;
+        UUID currentUser = UUID.randomUUID();
+
+        when(provider.getUser_id()).thenReturn(currentUser);
+        when(repo.deleteByIdAndUserId(any(Long.class), any(UUID.class))).thenReturn(1);
+
+        reminderService.removeReminderById(id);
+
+        verify(provider).getUser_id();
+        verify(repo).deleteByIdAndUserId(any(Long.class), any(UUID.class));
+    }
+
+    @Test
+    public void removeReminderById_shouldThrowReminderNotFoundException() {
+        Long id = 1L;
+        UUID currentUser = UUID.randomUUID();
+
+        when(provider.getUser_id()).thenReturn(currentUser);
+        when(repo.deleteByIdAndUserId(any(Long.class), any(UUID.class))).thenReturn(0);
+
+        assertThrows(ReminderNotFoundException.class,
+                () -> reminderService.removeReminderById(id));
+    }
+
+    @Test
+    public void editReminderById_shouldUpdateTwoFieldsAndReturnReminderResponse(){
+        Long id = 1L;
+        UUID currentUser = UUID.randomUUID();
+        UpdateDto updateDto = new UpdateDto(
+                "titleToUpdate",
+                null,
+                OffsetDateTime.parse("2030-02-01T10:15:30+03:00"));
+
+        Reminder reminder = Reminder.builder()
+                .id(1L)
+                .title("Test5")
+                .description("Test5")
+                .remind(LocalDateTime.parse("2030-01-01T13:30:00"))
+                .userId(currentUser)
+                .status(ReminderStatus.PENDING)
+                .build();
+
+        when(provider.getUser_id()).thenReturn(currentUser);
+        when(repo.findByIdAndUserId(any(Long.class), any(UUID.class)))
+                .thenReturn(Optional.of(reminder));
+        when(mapper.entityToResponse(any(Reminder.class)))
+                .thenAnswer(inv -> {
+            Reminder r = inv.getArgument(0);
+            return new ReminderResponse(
+                    r.getId(),
+                    r.getTitle(), r.getDescription(),
+                    r.getRemind(), r.getUserId());
+                });
+
+        ReminderResponse result = reminderService.editReminderById(id, updateDto);
+
+        assertThat(result.title()).isEqualTo("titleToUpdate");
+        assertThat(result.description()).isEqualTo("Test5");
+        assertThat(result.remind()).isEqualTo(LocalDateTime.parse("2030-02-01T07:15:30"));
+    }
+
+    @Test
+    public void editReminderById_shouldThrowReminderNotFoundException(){
+        Long id = 1L;
+        UUID currentUser = UUID.randomUUID();
+        UpdateDto updateDto = new UpdateDto(
+                null,null, null);
+
+        when(provider.getUser_id()).thenReturn(currentUser);
+        when(repo.findByIdAndUserId(any(Long.class), any(UUID.class)))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ReminderNotFoundException.class, () ->
+                reminderService.editReminderById(id, updateDto));
+    }
+
+
+
 }
