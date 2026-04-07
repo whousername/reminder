@@ -218,6 +218,14 @@ Key configs:
   - Server port
   - Security / OAuth2 JWT
 
+  ## Environment Setup
+
+  Create `.env` file in root directory based on `.env.example`:
+
+  - `TELEGRAM_BOT_TOKEN` — get from @BotFather in Telegram
+  - `TELEGRAM_BOT_USERNAME` — your bot username without @
+  - `MAIL_USERNAME` — Mailtrap username (recommended for testing)
+  - `MAIL_PASSWORD` — Mailtrap password
 
 ##  Build & Run
 
