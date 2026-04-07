@@ -12,6 +12,7 @@ import java.util.UUID;
 @Table(name = "reminder")
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Reminder {
 
     @Id

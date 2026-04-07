@@ -246,13 +246,8 @@ curl -X POST http://localhost:8080/api/v1/reminder/create \
 ```
 
 ## Tests:
-- Unit tests for service layer (JUnit + Mockito)
-- Basic integration test for Service + DB + Migrations (SpringBootTest, H2)
-
-
-## Known Limitations / TODO
-
-- Extended unit and integration test coverage.
+- Full coverage unit tests for service layer (JUnit + Mockito)
+- Full coverage integration tests for Service + DB + Migrations (SpringBootTest, Testcontainers)
 
 
 ## Architecture Notes
