@@ -13,4 +13,7 @@ public interface ReminderRepository extends JpaRepository<Reminder,Long>, JpaSpe
     int deleteByIdAndUserId(Long id, UUID userId);
 
     Optional<Reminder> findByIdAndUserId(Long id, UUID userId);
+
+    Optional<Reminder> findAllByUserId(UUID userId);
+
 }

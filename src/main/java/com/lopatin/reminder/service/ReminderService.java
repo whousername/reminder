@@ -50,11 +50,15 @@ public class ReminderService {
 
     @Transactional
     public ReminderResponse create(CreateReminderRequest request){
+        UUID userId = userProvider.getUser_id();
+        return create(request, userId);
+    }
 
-        UUID user_id = userProvider.getUser_id();
-        log.info("Creating reminder for userId={}", user_id);
+    @Transactional
+    public ReminderResponse create(CreateReminderRequest request, UUID userId){
+        log.info("Creating reminder for userId={}", userId);
 
-        var savedReminder = reminderRepo.save(mapper.dtoToEntity(request, user_id));
+        var savedReminder = reminderRepo.save(mapper.dtoToEntity(request, userId));
 
         if(TransactionSynchronizationManager.isSynchronizationActive()){
             TransactionSynchronizationManager.registerSynchronization(
@@ -63,8 +67,8 @@ public class ReminderService {
                         public void afterCommit() {
                             schedulerService
                                     .scheduleReminder(
-                                    savedReminder.getId(),
-                                    savedReminder.getRemind());
+                                            savedReminder.getId(),
+                                            savedReminder.getRemind());
                         }});
         } else { //no transaction
             schedulerService
@@ -101,6 +105,15 @@ public class ReminderService {
                 page.getTotalPages(),
                 page.getSize(),
                 content);
+    }
+
+    //for bot
+    public List<ReminderResponse> getAllReminders(UUID userId, Pageable pageable){
+        return reminderRepo
+                .findAllByUserId(userId)
+                .stream()
+                .map(mapper::entityToResponse)
+                .toList();
     }
 
 

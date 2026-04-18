@@ -11,4 +11,5 @@ public interface UserSettingsRepository extends JpaRepository<UserSettings, Stri
     Optional<UserSettings> findByLinkToken(String linkToken);
 
     Optional<UserSettings> findById(String keycloakId);
+    Optional<UserSettings> findByTelegramChatId(String chatId);
 }
