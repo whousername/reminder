@@ -54,7 +54,7 @@ public class ReminderService {
         return create(request, userId);
     }
 
-    @Transactional
+    @Transactional //перегрузка для бота
     public ReminderResponse create(CreateReminderRequest request, UUID userId){
         log.info("Creating reminder for userId={}", userId);
 
@@ -107,7 +107,8 @@ public class ReminderService {
                 content);
     }
 
-    //for bot
+
+    //перегрузка для бота
     public List<ReminderResponse> getAllReminders(UUID userId, Pageable pageable){
         return reminderRepo
                 .findAllByUserId(userId)
@@ -128,14 +129,30 @@ public class ReminderService {
         log.info("Reminder={} successfully deleted for userId={}", id, currentUser);
     }
 
+    //перегрузка для бота
+    @Transactional
+    public void removeReminderById(UUID userId, Long id) {
+        int deleted = reminderRepo.deleteByIdAndUserId(id, userId);
+        if(deleted == 0){
+            throw new ReminderNotFoundException(id);
+        }
+        log.info("Reminder={} successfully deleted for userId={}", id, userId);
+
+    }
 
 
     @Transactional
     public ReminderResponse editReminderById(Long id, UpdateDto dataToChange) {
-
         UUID currentUser = userProvider.getUser_id();
-        Reminder reminder = reminderRepo.findByIdAndUserId(id, currentUser)
-                .orElseThrow(() -> new ReminderNotFoundException(id));
+        return editReminderById(currentUser, id, dataToChange);
+    }
+
+    //перегрузка для бота
+    @Transactional
+    public ReminderResponse editReminderById(UUID userId, Long reminderId, UpdateDto dataToChange) {
+
+        Reminder reminder = reminderRepo.findByIdAndUserId(reminderId, userId)
+                .orElseThrow(() -> new ReminderNotFoundException(reminderId));
 
         if (dataToChange.title() != null) {
             reminder.setTitle(dataToChange.title());
@@ -150,7 +167,7 @@ public class ReminderService {
                     .toLocalDateTime());
         }
         log.info("Reminder updated: id={}, userId={}",
-                id, currentUser);
+                reminderId, userId);
         return mapper.entityToResponse(reminder);
     }
 

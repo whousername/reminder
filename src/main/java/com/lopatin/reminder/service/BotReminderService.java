@@ -1,6 +1,7 @@
 package com.lopatin.reminder.service;
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
+import com.lopatin.reminder.api.request.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.model.UserSettings;
@@ -32,9 +33,7 @@ public class BotReminderService {
                                    String description,
                                    OffsetDateTime date) {
 
-        UserSettings userSettings = userSettingsRepository.findByTelegramChatId(chatId.toString())
-                .orElseThrow(()-> new UserSettingsNotFoundException(chatId.toString()));
-        UUID userId = UUID.fromString(userSettings.getUserId());
+        UUID userId = getUserIdFromChatId(chatId);
 
         log.info("Creating reminder from bot for userId={}",
                 userId);
@@ -54,11 +53,26 @@ public class BotReminderService {
         int size = 10;
         Pageable pageable = PageRequest.of(page, size);
 
-        //нужен приватный метод?
-        UserSettings userSettings = userSettingsRepository.findByTelegramChatId(chatId.toString())
-                .orElseThrow(()-> new UserSettingsNotFoundException(chatId.toString()));
-        UUID userId = UUID.fromString(userSettings.getUserId());
+        UUID userId = getUserIdFromChatId(chatId);
 
         return reminderService.getAllReminders(userId, pageable);
     }
+
+    public void remove(Long chatId, Long reminderId) {
+        UUID userId = getUserIdFromChatId(chatId);
+        reminderService.removeReminderById(userId, reminderId);
+    }
+
+    public void edit(Long chatId, Long reminderId, UpdateDto updateDto) {
+        UUID userId = getUserIdFromChatId(chatId);
+        reminderService.editReminderById(userId, reminderId, updateDto);
+    }
+
+    private UUID getUserIdFromChatId(Long chatId){
+        UserSettings userSettings = userSettingsRepository.findByTelegramChatId(chatId.toString())
+                .orElseThrow(()-> new UserSettingsNotFoundException(chatId.toString()));
+        return UUID.fromString(userSettings.getUserId());
+    }
+
+
 }

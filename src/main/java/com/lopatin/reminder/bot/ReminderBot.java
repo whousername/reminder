@@ -1,8 +1,11 @@
 package com.lopatin.reminder.bot;
 
+import com.lopatin.reminder.api.request.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.exception.InvalidLinkTokenException;
+import com.lopatin.reminder.exception.ReminderNotFoundException;
 import com.lopatin.reminder.exception.TelegramServiceException;
+import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.service.BotReminderService;
 import com.lopatin.reminder.service.UserSettingsService;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.OffsetDateTime;
@@ -62,7 +68,7 @@ public class ReminderBot extends TelegramLongPollingBot {
 
             try {
                 userSettingsService.linkTelegram(linkToken, chatId.toString());
-                sendMessage(chatId, "Telegram подключен!");
+                sendMessage(chatId, "Telegram подключен!", buildKeyboard());
             } catch (InvalidLinkTokenException e) {
                 log.warn("Invalid link token from chatId={}", chatId, e);
                 sendMessage(chatId, "Ссылка недействительна или устарела. Получи новую ссылку.");
@@ -70,19 +76,45 @@ public class ReminderBot extends TelegramLongPollingBot {
         }
         if (text != null && text.equals("/create")){
             states.put(chatId, BotState.WAITING_TITLE);
-            drafts.put(chatId, new BotSession());
+            drafts.put(chatId, BotSession.builder().build());
             sendMessage(chatId, "Введи название напоминания... ");
             return;
         }
 
         if (text != null && text.equals("/list")){
-            List<ReminderResponse> reminderResponseList
-                    = botReminderService.getList(chatId);
+            List<ReminderResponse> reminderResponseList = null;
+            try {
+                reminderResponseList = botReminderService.getList(chatId);
+            } catch (UserSettingsNotFoundException e) {
+                states.remove(chatId);
+                sendMessage(chatId, "Привяжи Telegram заново через API");
+                return;
+            }
             if(reminderResponseList.isEmpty()){
                 sendMessage(chatId, "У тебя нет напоминаний.");
             } else {
                 sendMessage(chatId, formatList(reminderResponseList));
             }
+            return;
+        }
+
+        if(text != null && text.equals("/delete")){
+            sendMessage(chatId, "Введи id напоминания...");
+            states.put(chatId, BotState.WAITING_DELETE_ID);
+            return;
+        }
+
+        if(text != null && text.equals("/edit")){
+
+            sendMessage(chatId, "Введи id напоминания...");
+            states.put(chatId, BotState.WAITING_EDIT_ID);
+            return;
+        }
+
+        if (text != null && text.equals("/back")) {
+            states.remove(chatId);
+            drafts.remove(chatId);
+            sendMessage(chatId, "Отменено.");
             return;
         }
 
@@ -95,6 +127,85 @@ public class ReminderBot extends TelegramLongPollingBot {
     public void handleState(Long chatId, String message){
 
         BotState state = states.get(chatId);
+
+        if(state == BotState.WAITING_EDIT_ID){
+            try {
+                Long reminderId = Long.parseLong(message);
+                drafts.put(chatId, BotSession.builder().reminderId(reminderId).build());
+                states.put(chatId, BotState.WAITING_EDIT_TITLE);
+                sendMessage(chatId, "Введи новое название или пробел '-' чтобы оставить предыдущее...");
+                return;
+            } catch (NumberFormatException e) {
+                sendMessage(chatId, "Неверный id, попробуй ещё раз.");
+            }
+        }
+
+        if(state == BotState.WAITING_EDIT_TITLE) {
+            String title = message.equals("-") ? null : message;
+            drafts.put(chatId, BotSession.builder().title(title).build());
+            states.put(chatId, BotState.WAITING_EDIT_DESCRIPTION);
+            sendMessage(chatId, "Введи новое описание или пробел '-' чтобы оставить предыдущее...");
+            return;
+        }
+
+        if(state == BotState.WAITING_EDIT_DESCRIPTION) {
+            String description = message.equals("-") ? null : message;
+            drafts.put(chatId, BotSession.builder().description(description).build());
+            states.put(chatId, BotState.WAITING_EDIT_DATE);
+            sendMessage(chatId, "Введи новую дату или пробел '-' чтобы оставить предыдущую...");
+            return;
+        }
+        if (state == BotState.WAITING_EDIT_DATE){
+
+            try {
+                OffsetDateTime date = message.equals("-") ? null : OffsetDateTime.parse(message);
+                UpdateDto updateDto = UpdateDto.builder()
+                        .title(drafts.get(chatId).title)
+                        .description(drafts.get(chatId).description)
+                        .remind(date)
+                        .build();
+
+                botReminderService.edit(
+                        chatId,
+                        drafts.get(chatId).reminderId,
+                        updateDto);
+
+                drafts.remove(chatId);
+                states.remove(chatId);
+                sendMessage(chatId, "Напоминание успешно изменено.");
+                return;
+
+            } catch (UserSettingsNotFoundException e) {
+                states.remove(chatId);
+                sendMessage(chatId, "Привяжи Telegram заново через API");
+                return;
+            } catch (ReminderNotFoundException e) {
+                states.remove(chatId);
+                sendMessage(chatId, "Напоминание не найдено.");
+            } catch (DateTimeParseException e) {
+                sendMessage(chatId, "Неверный формат даты, попробуй ещё раз.");
+            }
+
+        }
+
+
+        if(state == BotState.WAITING_DELETE_ID){
+            try {
+                Long reminderId = Long.parseLong(message);
+                botReminderService.remove(chatId, reminderId);
+                states.remove(chatId);
+                sendMessage(chatId, "Напоминание удалено.");
+            } catch (UserSettingsNotFoundException e) {
+                states.remove(chatId);
+                sendMessage(chatId, "Привяжи Telegram заново через API");
+                return;
+            } catch (NumberFormatException e) {
+                sendMessage(chatId, "Неверный id, попробуй ещё раз.");
+            } catch (ReminderNotFoundException e) {
+                states.remove(chatId);
+                sendMessage(chatId, "Напоминание не найдено.");
+            }
+        }
 
         if (state == BotState.WAITING_TITLE){
             states.put(chatId, BotState.WAITING_DESCRIPTION);
@@ -137,6 +248,39 @@ public class ReminderBot extends TelegramLongPollingBot {
         }
     }
 
+    private void sendMessage(Long chatId, String text, ReplyKeyboardMarkup keyboard)
+    {
+        SendMessage msg = SendMessage.builder()
+                .chatId(chatId.toString())
+                .text(text)
+                .replyMarkup(keyboard)
+                .build();
+        try {
+            execute(msg);
+        } catch (TelegramApiException e) {
+            throw new TelegramServiceException("Failed to send message: ", e);
+        }
+    }
+
+    private ReplyKeyboardMarkup buildKeyboard(){
+        return ReplyKeyboardMarkup.builder()
+                .keyboardRow(new
+                        KeyboardRow(List.of(
+                        new KeyboardButton("/create"),
+                        new KeyboardButton("/list"))))
+                .keyboardRow(new
+                        KeyboardRow(List.of(
+                        new KeyboardButton("/delete"),
+                        new KeyboardButton("/edit"))))
+                .keyboardRow(new
+                        KeyboardRow(List.of(
+                        new KeyboardButton("/back"))))
+                .resizeKeyboard(true)
+                .build();
+    }
+
+
+
     private String formatList(List<ReminderResponse>
                                       reminders) {
         StringBuilder sb = new StringBuilder("Твои напоминания:\n\n");
@@ -149,11 +293,9 @@ public class ReminderBot extends TelegramLongPollingBot {
     }
 
 
-
     @Override
     public String getBotUsername() {
         return props.getUsername();
     }
-
 
 }
