@@ -2,12 +2,15 @@ package com.lopatin.reminder.service;
 
 import com.lopatin.reminder.bot.TelegramProperties;
 import com.lopatin.reminder.exception.InvalidLinkTokenException;
+import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.UUID;
 
 @Slf4j
@@ -28,6 +31,13 @@ public class UserSettingsService {
         repo.save(entity);
         log.info("New telegram chatId={} just linked", chatId);
 
+    }
+
+    @Transactional
+    public void linkTimeZone(UUID userId, String userZone){
+        UserSettings user = repo.findById(userId.toString())
+                .orElseThrow(()-> new UserSettingsNotFoundException(userId.toString()));
+        user.setTimezone(userZone);
     }
 
 

@@ -20,18 +20,21 @@ public class BotReminderService {
 
     private final UserSettingsRepository userSettingsRepository;
     private final ReminderService reminderService;
+    private final UserSettingsService userSettingsService;
 
 
     public BotReminderService(UserSettingsRepository userSettingsRepository,
-                              ReminderService reminderService) {
+                              ReminderService reminderService, UserSettingsService userSettingsService) {
         this.userSettingsRepository = userSettingsRepository;
         this.reminderService = reminderService;
+        this.userSettingsService = userSettingsService;
     }
 
-    public void create(Long chatId,
-                                   String title,
-                                   String description,
-                                   OffsetDateTime date) {
+    public void create
+            (Long chatId,
+            String title,
+            String description,
+            OffsetDateTime date) {
 
         UUID userId = getUserIdFromChatId(chatId);
 
@@ -68,11 +71,14 @@ public class BotReminderService {
         reminderService.editReminderById(userId, reminderId, updateDto);
     }
 
+    public void saveTimeZone(Long chatId, String userZone) {
+        UUID userId = getUserIdFromChatId(chatId);
+        userSettingsService.linkTimeZone(userId, userZone);
+    }
+
     private UUID getUserIdFromChatId(Long chatId){
         UserSettings userSettings = userSettingsRepository.findByTelegramChatId(chatId.toString())
                 .orElseThrow(()-> new UserSettingsNotFoundException(chatId.toString()));
         return UUID.fromString(userSettings.getUserId());
     }
-
-
 }

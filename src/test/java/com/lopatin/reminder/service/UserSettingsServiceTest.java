@@ -42,8 +42,12 @@ class UserSettingsServiceTest {
 
     @Test
     public void linkTelegram_shouldSetTelegramChatIdToUser() {
-        UserSettings entity = new UserSettings
-                (keycloakId, null, linkToken, "fakemail@test.com");
+        UserSettings entity = UserSettings.builder()
+                        .userId(keycloakId)
+                        .telegramChatId(null)
+                        .linkToken(linkToken)
+                        .email("fakemail@test.com")
+                        .build();
 
         when(userSettingsRepository.findByLinkToken(anyString())).thenReturn(Optional.of(entity));
 

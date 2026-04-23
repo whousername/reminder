@@ -23,6 +23,7 @@
             </column>
             <column name="link_token" type="varchar"></column>
             <column name="email" type="varchar"></column>
+            <column name="timezone" type="varchar"></column>
         </createTable>
 
     </changeSet>

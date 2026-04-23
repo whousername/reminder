@@ -29,5 +29,9 @@ public class UserSettings {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "timezone")
+    private String timezone;
+
+
 
 }
