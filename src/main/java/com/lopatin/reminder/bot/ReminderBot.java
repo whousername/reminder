@@ -109,7 +109,17 @@ public class ReminderBot extends TelegramLongPollingBot {
         if (text != null && text.equals("/list")){
             List<ReminderResponse> reminderResponseList = null;
             try {
-                reminderResponseList = botReminderService.getList(chatId);
+                UserSettings us = userSettingsRepository.findByTelegramChatId(chatId.toString())
+                        .orElseThrow();
+                ZoneId userZone = ZoneId.of(us.getTimezone());
+
+                reminderResponseList = botReminderService.getList(chatId).stream()
+                        .map(rr -> {
+                           return new ReminderResponse(rr.id(), rr.title(), rr.description(),
+                                   rr.remind().atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDateTime(),
+                                   rr.user_id());
+                        }).toList();
+
             } catch (UserSettingsNotFoundException e) {
                 states.remove(chatId);
                 sendMessage(chatId, "Привяжи Telegram заново через API");
@@ -154,6 +164,11 @@ public class ReminderBot extends TelegramLongPollingBot {
 
         BotState state = states.get(chatId);
 
+        if(state == null){
+            sendMessage(chatId, "Что-то пошло не так, начни заново", buildKeyboardCommands());
+            return;
+        }
+
         if(state == BotState.WAITING_EDIT_ID){
             try {
                 Long reminderId = Long.parseLong(message);
@@ -167,16 +182,14 @@ public class ReminderBot extends TelegramLongPollingBot {
         }
 
         if(state == BotState.WAITING_EDIT_TITLE) {
-            String title = message.equals("-") ? null : message;
-            drafts.put(chatId, BotSession.builder().title(title).build());
+            drafts.get(chatId).title = message.equals("-") ? null : message;
             states.put(chatId, BotState.WAITING_EDIT_DESCRIPTION);
             sendMessage(chatId, "Введи новое описание или '-' чтобы оставить предыдущее");
             return;
         }
 
         if(state == BotState.WAITING_EDIT_DESCRIPTION) {
-            String description = message.equals("-") ? null : message;
-            drafts.put(chatId, BotSession.builder().description(description).build());
+            drafts.get(chatId).description = message.equals("-") ? null : message;
             states.put(chatId, BotState.WAITING_EDIT_DATE);
             sendMessage(chatId,
                     "Введи новую дату в формате dd.mm.yyyy hh:mm или '-' чтобы оставить предыдущую");

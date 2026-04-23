@@ -57,7 +57,6 @@ public class BotReminderService {
         Pageable pageable = PageRequest.of(page, size);
 
         UUID userId = getUserIdFromChatId(chatId);
-
         return reminderService.getAllReminders(userId, pageable);
     }
 
