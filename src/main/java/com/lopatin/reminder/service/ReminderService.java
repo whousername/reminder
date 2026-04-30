@@ -8,6 +8,7 @@ import com.lopatin.reminder.mapper.ReminderMapper;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.mapper.UserProvider;
 import com.lopatin.reminder.model.Reminder;
+import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.scheduler.ReminderSchedulerService;
 import com.lopatin.reminder.service.specification.ReminderSpec;
@@ -111,7 +112,7 @@ public class ReminderService {
     //перегрузка для бота
     public List<ReminderResponse> getAllReminders(UUID userId, Pageable pageable){
         return reminderRepo
-                .findAllByUserId(userId)
+                .findAllByUserIdAndStatus(userId, ReminderStatus.PENDING)
                 .stream()
                 .map(mapper::entityToResponse)
                 .toList();
