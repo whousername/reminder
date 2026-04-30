@@ -1,17 +1,16 @@
 package com.lopatin.reminder.bot;
 
-import com.lopatin.reminder.api.request.UpdateDto;
+import com.lopatin.reminder.api.dto.ParsedReminderDto;
+import com.lopatin.reminder.api.dto.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderResponse;
-import com.lopatin.reminder.exception.InvalidLinkTokenException;
-import com.lopatin.reminder.exception.ReminderNotFoundException;
-import com.lopatin.reminder.exception.TelegramServiceException;
-import com.lopatin.reminder.exception.UserSettingsNotFoundException;
+import com.lopatin.reminder.config.TelegramProperties;
+import com.lopatin.reminder.exception.*;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import com.lopatin.reminder.service.BotReminderService;
+import com.lopatin.reminder.service.GroqService;
 import com.lopatin.reminder.service.UserSettingsService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -22,17 +21,16 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static java.time.ZoneOffset.UTC;
 
 @Slf4j
 @Component
@@ -43,17 +41,22 @@ public class ReminderBot extends TelegramLongPollingBot {
     private final UserSettingsService userSettingsService;
     private final UserSettingsRepository userSettingsRepository;
     private final BotReminderService botReminderService;
+    private final GroqService groqService;
 
     private final Map<Long, BotState> states = new HashMap<>();
     private final Map<Long, BotSession> drafts = new HashMap<>();
 
 
-    public ReminderBot(TelegramProperties props, UserSettingsService userSettingsService, UserSettingsRepository userSettingsRepository, BotReminderService botReminderService){
+    public ReminderBot(TelegramProperties props,
+                       UserSettingsService userSettingsService,
+                       UserSettingsRepository userSettingsRepository,
+                       BotReminderService botReminderService, GroqService groqService){
         super(props.getToken());
         this.props = props;
         this.userSettingsService = userSettingsService;
         this.userSettingsRepository = userSettingsRepository;
         this.botReminderService = botReminderService;
+        this.groqService = groqService;
     }
 
 
@@ -97,6 +100,7 @@ public class ReminderBot extends TelegramLongPollingBot {
                 log.warn("Invalid link token from chatId={}", chatId, e);
                 sendMessage(chatId, "Ссылка недействительна или устарела. Получи новую ссылку");
             }
+            return;
         }
 
         if (text != null && text.equals("/create")){
@@ -116,7 +120,7 @@ public class ReminderBot extends TelegramLongPollingBot {
                 reminderResponseList = botReminderService.getList(chatId).stream()
                         .map(rr -> {
                            return new ReminderResponse(rr.id(), rr.title(), rr.description(),
-                                   rr.remind().atZone(ZoneOffset.UTC).withZoneSameInstant(userZone).toLocalDateTime(),
+                                   rr.remind().atZone(UTC).withZoneSameInstant(userZone).toLocalDateTime(),
                                    rr.user_id());
                         }).toList();
 
@@ -153,6 +157,13 @@ public class ReminderBot extends TelegramLongPollingBot {
             return;
         }
 
+        if(text != null && text.equals("/AI")){
+            states.put(chatId, BotState.WAITING_AI);
+            drafts.put(chatId, BotSession.builder().build());
+            sendMessage(chatId, "Введи напоминание в свободной форме");
+            return;
+        }
+
         if (text != null){
             String message = update.getMessage().getText();
             handleState(chatId, message);
@@ -168,6 +179,40 @@ public class ReminderBot extends TelegramLongPollingBot {
             sendMessage(chatId, "Что-то пошло не так, начни заново", buildKeyboardCommands());
             return;
         }
+
+        if(state == BotState.WAITING_AI) {
+
+            try {
+                UserSettings userSettings = userSettingsRepository.findByTelegramChatId(chatId.toString())
+                        .orElseThrow( () -> new UserSettingsNotFoundException(chatId.toString()));
+                String timezone = userSettings.getTimezone();
+
+                ParsedReminderDto parsedReminderDto = groqService
+                        .parse(message, timezone, userSettings.getUserId());
+
+
+                ReminderResponse savedReminder = botReminderService.create(chatId,
+                        parsedReminderDto.title(),
+                        parsedReminderDto.description(),
+                        parsedReminderDto.remind()
+                                .atZone(ZoneId.of(timezone)).withZoneSameInstant(UTC).toOffsetDateTime());
+
+                sendMessage(chatId, "Напоминание успешно создано"
+                        + formatReminder(savedReminder, timezone));
+
+                states.remove(chatId);
+                return;
+
+            } catch (UserSettingsNotFoundException e) {
+                states.remove(chatId);
+                sendMessage(chatId, "Привяжи Telegram заново через API");
+                return;
+            } catch (GroqServiceException e){
+                sendMessage(chatId, "Ошибка парсинга. Переформулируй и попробуй еще раз");
+                return;
+            }
+        }
+
 
         if(state == BotState.WAITING_EDIT_ID){
             try {
@@ -219,7 +264,7 @@ public class ReminderBot extends TelegramLongPollingBot {
                                 .parse(message, formatter)
                                 .atZone(zone)
                                 .toOffsetDateTime()
-                                .withOffsetSameInstant(ZoneOffset.UTC);
+                                .withOffsetSameInstant(UTC);
 
                 UpdateDto updateDto = UpdateDto.builder()
                         .title(drafts.get(chatId).title)
@@ -301,7 +346,7 @@ public class ReminderBot extends TelegramLongPollingBot {
                                 .parse(message, formatter)
                                 .atZone(zone)
                                 .toOffsetDateTime()
-                                .withOffsetSameInstant(ZoneOffset.UTC);
+                                .withOffsetSameInstant(UTC);
 
 
                 BotSession draft = drafts.get(chatId);
@@ -319,6 +364,8 @@ public class ReminderBot extends TelegramLongPollingBot {
             }
         }
     }
+
+
 
     private void sendMessage(Long chatId, String message){
         SendMessage msg = SendMessage.builder()
@@ -409,6 +456,9 @@ public class ReminderBot extends TelegramLongPollingBot {
                         new KeyboardButton("/edit"))))
                 .keyboardRow(new
                         KeyboardRow(List.of(
+                        new KeyboardButton("/AI"))))
+                .keyboardRow(new
+                        KeyboardRow(List.of(
                         new KeyboardButton("/back"))))
                 .resizeKeyboard(true)
                 .build();
@@ -425,6 +475,15 @@ public class ReminderBot extends TelegramLongPollingBot {
             sb.append(" ").append(r.remind()).append("\n\n");
         }
         return sb.toString();
+    }
+
+    private String formatReminder(ReminderResponse reminderResponse, String timezone) {
+        return "\n" +
+                "ID: " + reminderResponse.id() +  "\n" +
+                "Title: " + reminderResponse.title() + "\n" +
+                "Description: " + reminderResponse.description() + "\n" +
+                "Remind at: " + reminderResponse.remind().atZone(UTC)
+                                    .withZoneSameInstant(ZoneId.of(timezone)).toLocalDateTime() + "\n";
     }
 
 

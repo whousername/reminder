@@ -2,7 +2,7 @@ package com.lopatin.reminder.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lopatin.reminder.api.request.TelegramRequest;
-import com.lopatin.reminder.bot.TelegramProperties;
+import com.lopatin.reminder.config.TelegramProperties;
 import com.lopatin.reminder.exception.TelegramServiceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

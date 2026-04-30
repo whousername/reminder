@@ -1,6 +1,6 @@
 package com.lopatin.reminder.service;
 
-import com.lopatin.reminder.bot.TelegramProperties;
+import com.lopatin.reminder.config.TelegramProperties;
 import com.lopatin.reminder.exception.InvalidLinkTokenException;
 import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.model.UserSettings;

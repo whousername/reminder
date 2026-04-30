@@ -2,7 +2,7 @@ package com.lopatin.reminder.service;
 
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
-import com.lopatin.reminder.api.request.UpdateDto;
+import com.lopatin.reminder.api.dto.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderPageResponse;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.exception.ReminderNotFoundException;
@@ -12,7 +12,6 @@ import com.lopatin.reminder.model.Reminder;
 import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.scheduler.ReminderSchedulerService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

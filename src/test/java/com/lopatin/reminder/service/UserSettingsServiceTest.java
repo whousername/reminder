@@ -1,8 +1,7 @@
 package com.lopatin.reminder.service;
 
-import com.lopatin.reminder.bot.TelegramProperties;
+import com.lopatin.reminder.config.TelegramProperties;
 import com.lopatin.reminder.exception.InvalidLinkTokenException;
-import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import org.junit.jupiter.api.Test;
@@ -12,9 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import javax.print.DocFlavor;
-import java.sql.Struct;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 

@@ -4,6 +4,8 @@ import com.lopatin.reminder.model.Reminder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +16,6 @@ public interface ReminderRepository extends JpaRepository<Reminder,Long>, JpaSpe
 
     Optional<Reminder> findByIdAndUserId(Long id, UUID userId);
 
-    Optional<Reminder> findAllByUserId(UUID userId);
+    List<Reminder> findAllByUserId(UUID userId);
 
 }

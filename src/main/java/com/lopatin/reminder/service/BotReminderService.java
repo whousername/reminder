@@ -1,7 +1,7 @@
 package com.lopatin.reminder.service;
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
-import com.lopatin.reminder.api.request.UpdateDto;
+import com.lopatin.reminder.api.dto.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.exception.UserSettingsNotFoundException;
 import com.lopatin.reminder.model.UserSettings;
@@ -30,7 +30,7 @@ public class BotReminderService {
         this.userSettingsService = userSettingsService;
     }
 
-    public void create
+    public ReminderResponse create
             (Long chatId,
             String title,
             String description,
@@ -47,7 +47,7 @@ public class BotReminderService {
                 .remind(date)
                 .build();
 
-        reminderService.create(request, userId);
+        return reminderService.create(request, userId);
     }
 
 

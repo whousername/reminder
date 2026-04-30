@@ -13,6 +13,10 @@ logging:
     org.hibernate.SQL: DEBUG
     org.springframework.security: DEBUG
 
+groq:
+  api-key: ${GROQ_API_KEY}
+  model: llama-3.3-70b-versatile
+
 spring:
   application:
     name: Reminder Application
@@ -72,3 +76,5 @@ spring:
           auth: true
           starttls:
             enable: true
+
+
