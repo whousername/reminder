@@ -5,6 +5,7 @@ import com.lopatin.reminder.api.dto.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.config.TelegramProperties;
 import com.lopatin.reminder.exception.*;
+import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import com.lopatin.reminder.service.BotReminderService;
@@ -71,6 +72,34 @@ public class ReminderBot extends TelegramLongPollingBot {
                 String userZone = data.substring(3);
                 botReminderService.saveTimeZone(callbackChatId, userZone);
                 sendMessage(callbackChatId, "Готово", buildKeyboardCommands());
+                return;
+            }
+            if (data.startsWith("ReminderProgress.")) {
+                String changeProgress = data.substring(17);
+                ReminderProgress progress = null;
+                if (changeProgress.equals("IN_PROGRESS")) progress = ReminderProgress.IN_PROGRESS;
+                else if (changeProgress.equals("DONE")) progress = ReminderProgress.DONE;
+                if (progress != null) {
+                    try {
+                        botReminderService.changeReminderProgress(
+                                callbackChatId,
+                                drafts.get(callbackChatId).reminderId,
+                                progress);
+                        sendMessage(callbackChatId, "Прогресс напоминания успешно изменен");
+                        drafts.remove(callbackChatId);
+                        states.remove(callbackChatId);
+                    } catch (UserSettingsNotFoundException e) {
+                        drafts.remove(callbackChatId);
+                        states.remove(callbackChatId);
+                        sendMessage(callbackChatId, "Привяжи Telegram заново через API");
+                    } catch (ReminderNotFoundException e) {
+                        drafts.remove(callbackChatId);
+                        sendMessage(callbackChatId, "Напоминание c таким ID не найдено, попробуй другой ID");
+                        states.put(callbackChatId, BotState.WAITING_CHANGE_PROGRESS);
+                        drafts.put(callbackChatId, BotSession.builder().build());
+                    }
+                }
+                return;
             }
             return;
         }
@@ -121,7 +150,8 @@ public class ReminderBot extends TelegramLongPollingBot {
                         .map(rr -> {
                            return new ReminderResponse(rr.id(), rr.title(), rr.description(),
                                    rr.remind().atZone(UTC).withZoneSameInstant(userZone).toLocalDateTime(),
-                                   rr.user_id());
+                                   rr.user_id(),
+                                   rr.reminderProgress());
                         }).toList();
 
             } catch (UserSettingsNotFoundException e) {
@@ -150,6 +180,18 @@ public class ReminderBot extends TelegramLongPollingBot {
             return;
         }
 
+        if(text != null && text.equals("/AI")){
+            states.put(chatId, BotState.WAITING_AI);
+            sendMessage(chatId, "Введи напоминание в свободной форме");
+            return;
+        }
+        if(text != null && text.equals("/progress")){
+            states.put(chatId, BotState.WAITING_CHANGE_PROGRESS);
+            drafts.put(chatId, BotSession.builder().build());
+            sendMessage( chatId,"Введи id напоминания");
+            return;
+        }
+
         if (text != null && text.equals("/back")) {
             states.remove(chatId);
             drafts.remove(chatId);
@@ -157,12 +199,6 @@ public class ReminderBot extends TelegramLongPollingBot {
             return;
         }
 
-        if(text != null && text.equals("/AI")){
-            states.put(chatId, BotState.WAITING_AI);
-            drafts.put(chatId, BotSession.builder().build());
-            sendMessage(chatId, "Введи напоминание в свободной форме");
-            return;
-        }
 
         if (text != null){
             String message = update.getMessage().getText();
@@ -179,6 +215,13 @@ public class ReminderBot extends TelegramLongPollingBot {
             sendMessage(chatId, "Что-то пошло не так, начни заново", buildKeyboardCommands());
             return;
         }
+
+        if(state == BotState.WAITING_CHANGE_PROGRESS){
+            drafts.get(chatId).reminderId = Long.parseLong(message);
+            sendMessage(chatId,"Какой прогресс установить для задачи?", buildKeyboardChangeStatus());
+            return;
+        }
+
 
         if(state == BotState.WAITING_AI) {
 
@@ -443,6 +486,18 @@ public class ReminderBot extends TelegramLongPollingBot {
     }
 
 
+    private InlineKeyboardMarkup buildKeyboardChangeStatus() {
+        return InlineKeyboardMarkup.builder()
+                .keyboardRow(List.of(
+                        InlineKeyboardButton.builder().text("IN_PROGRESS")
+                                .callbackData("ReminderProgress.IN_PROGRESS").build(),
+                        InlineKeyboardButton.builder().text("DONE")
+                                .callbackData("ReminderProgress.DONE").build()))
+                .build();
+
+    }
+
+
 
     private ReplyKeyboardMarkup buildKeyboardCommands(){
         return ReplyKeyboardMarkup.builder()
@@ -454,6 +509,9 @@ public class ReminderBot extends TelegramLongPollingBot {
                         KeyboardRow(List.of(
                         new KeyboardButton("/delete"),
                         new KeyboardButton("/edit"))))
+                .keyboardRow(new
+                        KeyboardRow(List.of(
+                        new KeyboardButton("/progress"))))
                 .keyboardRow(new
                         KeyboardRow(List.of(
                         new KeyboardButton("/AI"))))
@@ -472,7 +530,8 @@ public class ReminderBot extends TelegramLongPollingBot {
         for (int i = 0; i < reminders.size(); i++) {
             ReminderResponse r = reminders.get(i);
             sb.append(i + 1).append(". ").append("[id:").append(r.id()).append("] ").append(r.title()).append("\n");
-            sb.append(" ").append(r.remind()).append("\n\n");
+            sb.append(" ").append(r.remind()).append("\n");
+            sb.append("[status: ").append(r.reminderProgress()).append("]").append("\n");
         }
         return sb.toString();
     }
@@ -493,3 +552,4 @@ public class ReminderBot extends TelegramLongPollingBot {
     }
 
 }
+

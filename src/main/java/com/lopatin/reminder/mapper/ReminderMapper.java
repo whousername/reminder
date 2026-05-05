@@ -3,6 +3,7 @@ package com.lopatin.reminder.mapper;
 import com.lopatin.reminder.api.request.CreateReminderRequest;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.model.Reminder;
+import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.ReminderStatus;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +20,8 @@ public class ReminderMapper {
                 savedEntity.getTitle(),
                 savedEntity.getDescription(),
                 savedEntity.getRemind(),
-                savedEntity.getUserId()
+                savedEntity.getUserId(),
+                savedEntity.getProgress()
         );
     }
     public Reminder dtoToEntity(CreateReminderRequest request, UUID user_id) {
@@ -29,7 +31,8 @@ public class ReminderMapper {
                 request.description(),
                 request.remind().withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime(),
                 user_id,
-                ReminderStatus.PENDING
+                ReminderStatus.PENDING,
+                ReminderProgress.CREATED
         );
     }
 

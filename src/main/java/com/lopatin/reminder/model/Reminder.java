@@ -34,6 +34,11 @@ public class Reminder {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private ReminderStatus status;
+
+    @Column(name = "progress")
+    @Enumerated(EnumType.STRING)
+    private ReminderProgress progress;
+
 }
 
 

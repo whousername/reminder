@@ -4,5 +4,6 @@ public enum ReminderStatus {
     PENDING,
     SENT,
     PARTIALLY_SENT,
-    FAILED
+    FAILED,
+    USER_COMPLETE
 }

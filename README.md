@@ -33,6 +33,7 @@ Backend REST API для управления напоминаниями.
 - получать список напоминаний с пагинацией
 - выполнять поиск / сортировку / фильтрацию
 - отправлять уведомления (email / telegram)
+- отслеживать статус выполнения задачи (прогресс: CREATED / IN_PROGRESS / DONE)
 - управлять всеми функциями API /командами из Телеграм-бота
 - создавать напоминания написанием задачи в свободной форме по команде /ai из Телеграм-бота
 ---
@@ -54,6 +55,8 @@ Backend REST API для управления напоминаниями.
 - /delete - Delete a reminder by ID
 
 - /ai - Create a reminder in free-form text
+
+- /progress - Change reminder progress status (CREATED / IN_PROGRESS / DONE)
 
 - /back - Cancel current action
 
@@ -80,7 +83,8 @@ Backend REST API для управления напоминаниями.
 | description| varchar(4096)  | Full description                |
 | remind_at  | timestamp      | Reminder date and time (ISO)    |
 | user_id    | uuid           | Owner user id (Keycloak Id)     |
-| status     | varchar        | PENDING, PARTIALLY_SENT, SENT, FAILED|
+| status     | varchar        | PENDING, PARTIALLY_SENT, SENT, FAILED, USER_COMPLETE |
+| progress   | varchar        | CREATED, IN_PROGRESS, DONE           |
 
 ---
 ### UserSettings
@@ -125,6 +129,8 @@ Response:
 ```
 
 PATCH /api/v1/reminder/{id}
+
+PATCH /api/v1/reminder/progress/{id}
 
 GET /api/v1/settings/telegram-link
 
@@ -171,6 +177,7 @@ http://localhost:8081/admin/master/console/
 - Handles reminder tasks via `ReminderJob` and `ReminderSchedulerService`.
 - Tables created with Liquibase changelog `v1-002-create-quartz-tables.xml`.
 - Misfire handling: tasks delayed >5 min are marked `FAILED`.
+- Reminders with progress `DONE` are skipped and marked `USER_COMPLETE` instead of sending a notification.
 
 ### Notifications
 - `NotificationService` sends notifications from Quartz jobs.
