@@ -6,6 +6,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static com.lopatin.reminder.model.ReminderProgress.CREATED;
+
 @Getter
 @Setter
 @Entity
@@ -34,6 +36,11 @@ public class Reminder {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private ReminderStatus status;
+
+    @Column(name = "progress")
+    @Enumerated(EnumType.STRING)
+    private ReminderProgress progress;
+
 }
 
 

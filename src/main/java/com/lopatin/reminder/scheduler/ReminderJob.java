@@ -2,6 +2,7 @@ package com.lopatin.reminder.scheduler;
 
 import com.lopatin.reminder.exception.ReminderNotFoundException;
 import com.lopatin.reminder.exception.UserSettingsNotFoundException;
+import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.service.NotificationService;
@@ -40,6 +41,15 @@ public class ReminderJob implements Job {
             reminderRepo.save(reminder);
             return;
         }
+
+        //does not notify reminder in DONE progress
+        if(reminder.getProgress() == ReminderProgress.DONE){
+            log.warn("Reminder={} progress is DONE, skipping", reminderId);
+            reminder.setStatus(ReminderStatus.USER_COMPLETE);
+            reminderRepo.save(reminder);
+            return;
+        }
+
 
         try {
             notificationService.sendReminder(reminder);

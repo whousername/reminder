@@ -2,12 +2,14 @@ package com.lopatin.reminder.service;
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
 import com.lopatin.reminder.api.dto.UpdateDto;
+import com.lopatin.reminder.api.request.ProgressRequest;
 import com.lopatin.reminder.api.response.ReminderPageResponse;
 import com.lopatin.reminder.exception.ReminderNotFoundException;
 import com.lopatin.reminder.mapper.ReminderMapper;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.mapper.UserProvider;
 import com.lopatin.reminder.model.Reminder;
+import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.scheduler.ReminderSchedulerService;
@@ -21,9 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+
+import static java.time.ZoneOffset.UTC;
 
 @Slf4j
 @Service
@@ -112,8 +117,11 @@ public class ReminderService {
     //перегрузка для бота
     public List<ReminderResponse> getAllReminders(UUID userId, Pageable pageable){
         return reminderRepo
-                .findAllByUserIdAndStatus(userId, ReminderStatus.PENDING)
+                .findAllByUserIdAndStatus(userId, pageable, ReminderStatus.PENDING)
                 .stream()
+                .filter(r -> r
+                        .getProgress() == ReminderProgress.IN_PROGRESS
+                        || r.getProgress() == ReminderProgress.CREATED)
                 .map(mapper::entityToResponse)
                 .toList();
     }
@@ -164,12 +172,30 @@ public class ReminderService {
         if (dataToChange.remind() != null) {
             reminder.setRemind(dataToChange
                     .remind()
-                    .withOffsetSameInstant(ZoneOffset.UTC)
+                    .withOffsetSameInstant(UTC)
                     .toLocalDateTime());
         }
         log.info("Reminder updated: id={}, userId={}",
                 reminderId, userId);
         return mapper.entityToResponse(reminder);
+    }
+
+
+    public void changeReminderProgress(Long reminderId, ProgressRequest newProgress) {
+        UUID currentUser = userProvider.getUser_id();
+        changeReminderProgress(currentUser, reminderId, newProgress.reminderProgress());
+    }
+
+    //перегрузка для бота
+    @Transactional
+    public void changeReminderProgress(UUID userId, Long reminderId, ReminderProgress newProgress) {
+        Reminder reminder = reminderRepo.findByIdAndUserId(reminderId, userId)
+                .orElseThrow(()-> new ReminderNotFoundException(reminderId));
+
+        reminder.setProgress(newProgress);
+        reminderRepo.save(reminder);
+
+        log.info("ReminderProgress successfully changed for id={}, userId={}", reminderId, userId);
     }
 
 }

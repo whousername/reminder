@@ -264,6 +264,4 @@ class ReminderServiceIT {
                 service.editReminderById(666L, dataToChange));
     }
 
-
-
 }

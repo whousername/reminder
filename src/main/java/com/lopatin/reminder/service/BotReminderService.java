@@ -4,6 +4,7 @@ import com.lopatin.reminder.api.request.CreateReminderRequest;
 import com.lopatin.reminder.api.dto.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.exception.UserSettingsNotFoundException;
+import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -75,9 +76,21 @@ public class BotReminderService {
         userSettingsService.linkTimeZone(userId, userZone);
     }
 
+    public void changeReminderProgress(Long chatId, Long reminderId, ReminderProgress reminderProgress) {
+
+        UUID userId = getUserIdFromChatId(chatId);
+        reminderService.changeReminderProgress(
+                userId,
+                reminderId,
+                reminderProgress);
+
+    }
+
     private UUID getUserIdFromChatId(Long chatId){
         UserSettings userSettings = userSettingsRepository.findByTelegramChatId(chatId.toString())
                 .orElseThrow(()-> new UserSettingsNotFoundException(chatId.toString()));
         return UUID.fromString(userSettings.getUserId());
     }
+
+
 }
