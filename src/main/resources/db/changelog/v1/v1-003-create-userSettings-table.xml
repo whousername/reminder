@@ -18,9 +18,12 @@
             <column name="keycloak_user_id" type="varchar">
                 <constraints primaryKey="true" nullable="false"></constraints>
             </column>
-            <column name="telegram_chat_id" type="varchar"></column>
+            <column name="telegram_chat_id" type="varchar">
+                <constraints unique="true"></constraints>
+            </column>
             <column name="link_token" type="varchar"></column>
             <column name="email" type="varchar"></column>
+            <column name="timezone" type="varchar"></column>
         </createTable>
 
     </changeSet>

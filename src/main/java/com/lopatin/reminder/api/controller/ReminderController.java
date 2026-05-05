@@ -1,7 +1,8 @@
 package com.lopatin.reminder.api.controller;
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
-import com.lopatin.reminder.api.request.UpdateDto;
+import com.lopatin.reminder.api.dto.UpdateDto;
+import com.lopatin.reminder.api.request.ProgressRequest;
 import com.lopatin.reminder.api.response.ReminderPageResponse;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.service.UserSettingsService;
@@ -28,7 +29,7 @@ public class ReminderController {
 
 
     @GetMapping("/settings/telegram-link")
-    public String telegramLink(@AuthenticationPrincipal Jwt jwt){
+    public String telegramLink(@AuthenticationPrincipal Jwt jwt) {
         return userSettingsService.generateTgLink(jwt);
     }
 
@@ -50,9 +51,8 @@ public class ReminderController {
             @RequestParam(defaultValue = "remind") String sortBy,
             @RequestParam(defaultValue = "asc") String direction,
 
-            @RequestParam (defaultValue = "0") int page,
-            @RequestParam (defaultValue = "10") int size)
-    {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Sort sort = direction.equals("asc") ?
                 Sort.by(sortBy).ascending() :
                 Sort.by(sortBy).descending();
@@ -64,7 +64,7 @@ public class ReminderController {
 
 
     @DeleteMapping("/reminder/remove/{id}")
-    public ResponseEntity<Void> removeReminderById(@PathVariable Long id){
+    public ResponseEntity<Void> removeReminderById(@PathVariable Long id) {
         reminderService.removeReminderById(id);
         return ResponseEntity.noContent().build();
     }
@@ -72,9 +72,16 @@ public class ReminderController {
     @PatchMapping("/reminder/{id}")
     public ResponseEntity<ReminderResponse> edit
             (@PathVariable Long id,
-            @RequestBody @Valid UpdateDto dataToChange){
+             @RequestBody @Valid UpdateDto dataToChange) {
         return ResponseEntity.ok(reminderService.editReminderById(id, dataToChange));
     }
 
+    @PatchMapping("/reminder/progress/{id}")
+    public ResponseEntity<Void> changeProgress(
+            @PathVariable Long id,
+            @RequestBody ProgressRequest progressRequest) {
 
+        reminderService.changeReminderProgress(id, progressRequest);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -2,17 +2,17 @@ package com.lopatin.reminder.service;
 
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
-import com.lopatin.reminder.api.request.UpdateDto;
+import com.lopatin.reminder.api.dto.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderPageResponse;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.exception.ReminderNotFoundException;
 import com.lopatin.reminder.mapper.ReminderMapper;
 import com.lopatin.reminder.mapper.UserProvider;
 import com.lopatin.reminder.model.Reminder;
+import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.scheduler.ReminderSchedulerService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -62,16 +62,16 @@ public class ReminderServiceTest {
         UUID user_id = UUID.randomUUID();
 
         Reminder entityBeforeSave = new Reminder(
-                null, "test1", "test1", localDateTime, user_id, ReminderStatus.PENDING);
+                null, "test1", "test1", localDateTime, user_id, ReminderStatus.PENDING, null);
 
         Reminder entityAfterSave = new Reminder(
-                1L, "test1", "test1", localDateTime, user_id, ReminderStatus.PENDING);
+                1L, "test1", "test1", localDateTime, user_id, ReminderStatus.PENDING, ReminderProgress.CREATED);
 
         CreateReminderRequest reminderRequest = new CreateReminderRequest(
                 "test1","test1",requestTime);
 
         ReminderResponse reminderResponse = new ReminderResponse(
-                1L,"test1","test1",localDateTime, user_id);
+                1L,"test1","test1",localDateTime, user_id, ReminderProgress.CREATED);
 
 
         when(provider.getUser_id()).thenReturn(user_id);
@@ -113,7 +113,7 @@ public class ReminderServiceTest {
                 .build();
 
         ReminderResponse reminderResponse = new ReminderResponse(
-                1L,"Test2", null, remindDate,currentUser);
+                1L,"Test2", null, remindDate,currentUser, ReminderProgress.CREATED);
 
         Page<Reminder> reminderPage = new PageImpl<Reminder>(List.of(reminder));
 
@@ -183,7 +183,7 @@ public class ReminderServiceTest {
             return new ReminderResponse(
                     r.getId(),
                     r.getTitle(), r.getDescription(),
-                    r.getRemind(), r.getUserId());
+                    r.getRemind(), r.getUserId(), r.getProgress());
                 });
 
         ReminderResponse result = reminderService.editReminderById(id, updateDto);

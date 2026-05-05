@@ -1,6 +1,5 @@
-package com.lopatin.reminder.bot;
+package com.lopatin.reminder.config;
 
-import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

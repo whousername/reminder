@@ -60,5 +60,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="v1-6" author="Lopatin Pavel">
+        <addColumn tableName="reminder">
+            <column name="progress" type="varchar" defaultValue="CREATED">
+            </column>
+        </addColumn>
+    </changeSet>
+
 
 </databaseChangeLog>

@@ -1,7 +1,7 @@
 package com.lopatin.reminder.service;
 
 import com.lopatin.reminder.api.request.CreateReminderRequest;
-import com.lopatin.reminder.api.request.UpdateDto;
+import com.lopatin.reminder.api.dto.UpdateDto;
 import com.lopatin.reminder.api.response.ReminderPageResponse;
 import com.lopatin.reminder.api.response.ReminderResponse;
 import com.lopatin.reminder.exception.ReminderNotFoundException;
@@ -263,7 +263,5 @@ class ReminderServiceIT {
         assertThrows(ReminderNotFoundException.class, () ->
                 service.editReminderById(666L, dataToChange));
     }
-
-
 
 }

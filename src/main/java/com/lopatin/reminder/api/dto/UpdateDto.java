@@ -1,9 +1,11 @@
-package com.lopatin.reminder.api.request;
+package com.lopatin.reminder.api.dto;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import java.time.OffsetDateTime;
 
+@Builder
 public record UpdateDto(
 
         @Size(max = 255)

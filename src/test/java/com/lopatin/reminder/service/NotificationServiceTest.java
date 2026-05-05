@@ -49,8 +49,12 @@ class NotificationServiceTest {
             .status(ReminderStatus.PENDING)
             .build();
     private final UserSettings userSettings =
-            new UserSettings(keycloakId, "test-chatId",
-                    null, "fakemail@test.com");
+            UserSettings.builder()
+                    .userId(keycloakId)
+                    .telegramChatId("test-chatId")
+                    .linkToken(null)
+                    .email("fakemail@test.com")
+                    .build();
 
 
     @Test

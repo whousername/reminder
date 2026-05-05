@@ -1,0 +1,14 @@
+package com.lopatin.reminder.bot;
+
+public enum BotState {
+    WAITING_TITLE,
+    WAITING_DESCRIPTION,
+    WAITING_DATE,
+    WAITING_DELETE_ID,
+    WAITING_EDIT_TITLE,
+    WAITING_EDIT_DESCRIPTION,
+    WAITING_EDIT_DATE,
+    WAITING_AI,
+    WAITING_CHANGE_PROGRESS, 
+    WAITING_EDIT_ID
+}

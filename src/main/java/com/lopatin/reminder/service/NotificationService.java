@@ -43,8 +43,7 @@ public class NotificationService {
             else {
                 telegramService.sendTelegram(
                         chatId,
-                        "/Напоминание: " + reminder.getTitle() +
-                                " /Подробности: " + reminder.getDescription());
+                        messageFormatter(reminder));
                 sentTg = true;
             }
 
@@ -59,8 +58,8 @@ public class NotificationService {
             else {
                 mailService.sendMail(
                         mail,
-                        "/Напоминание: " + reminder.getTitle()  +
-                                " /Подробности: ", reminder.getDescription());
+                        reminder.getTitle(),
+                        messageFormatter(reminder));
                 sentMail = true;
             }
         }
@@ -79,5 +78,10 @@ public class NotificationService {
         reminderRepo.save(reminder);
 
         log.info("Reminder id={} status={}", reminder.getId(), reminder.getStatus());
+    }
+
+    private String messageFormatter(Reminder reminder) {
+        return "Новое напоминание: " + reminder.getTitle() + "\n" +
+                "Детали: " + reminder.getDescription();
     }
 }
