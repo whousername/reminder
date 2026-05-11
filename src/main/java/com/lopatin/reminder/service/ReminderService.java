@@ -68,22 +68,17 @@ public class ReminderService {
 
         var savedReminder = reminderRepo.save(mapper.dtoToEntity(request, userId));
 
-        if(TransactionSynchronizationManager.isSynchronizationActive()){
-            TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                        @Override
-                        public void afterCommit() {
-                            schedulerService
-                                    .scheduleReminder(
-                                            savedReminder.getId(),
-                                            savedReminder.getRemind());
-                        }});
-        } else { //no transaction
-            schedulerService
-                    .scheduleReminder(
-                            savedReminder.getId(),
-                            savedReminder.getRemind());
-        }
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        schedulerService
+                                .scheduleReminder(
+                                        savedReminder.getId(),
+                                        savedReminder.getRemind());
+
+                    }
+                });
         return mapper.entityToResponse(savedReminder);
     }
 
