@@ -16,7 +16,9 @@ import com.lopatin.reminder.scheduler.ReminderSchedulerService;
 import com.lopatin.reminder.service.specification.ReminderSpec;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,7 +92,16 @@ public class ReminderService {
             String search,
             LocalDate dateFrom,
             LocalDate dateTo,
-            Pageable pageable) {
+            String sortBy,
+            String direction,
+            int page,
+            int size) {
+
+        Sort sort = direction.equals("asc") ?
+                Sort.by(sortBy).ascending() :
+                Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         UUID currentUser = userProvider.getUser_id();
 
@@ -99,17 +110,17 @@ public class ReminderService {
                 .and(ReminderSpec.bySearch(search))
                 .and(ReminderSpec.byDateRange(dateFrom, dateTo));
 
-        Page<Reminder> page = reminderRepo.findAll(specification, pageable);
+        Page<Reminder> responsePage = reminderRepo.findAll(specification, pageable);
 
-        List<ReminderResponse> content = page.getContent()
+        List<ReminderResponse> content = responsePage.getContent()
                 .stream()
                 .map(mapper::entityToResponse)
                 .toList();
 
         return new ReminderPageResponse(
-                page.getTotalElements(),
-                page.getTotalPages(),
-                page.getSize(),
+                responsePage.getTotalElements(),
+                responsePage.getTotalPages(),
+                responsePage.getSize(),
                 content);
     }
 

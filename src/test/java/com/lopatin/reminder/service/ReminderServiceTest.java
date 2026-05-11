@@ -97,10 +97,10 @@ public class ReminderServiceTest {
         LocalDate dateTo = LocalDate.parse("2030-01-02");
         LocalDateTime remindDate = LocalDateTime.parse(
                 "2030-01-01T13:30:00");
-
+        String sortBy = "title";
+        String direction = "asc";
         int page = 0;
         int size = 10;
-        Pageable pageable = PageRequest.of(page, size);
 
         UUID currentUser = UUID.randomUUID();
 
@@ -121,7 +121,7 @@ public class ReminderServiceTest {
         when(repo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(reminderPage);
         when(mapper.entityToResponse(any(Reminder.class))).thenReturn(reminderResponse);
 
-        ReminderPageResponse result = reminderService.getAllReminders(search, dateFrom, dateTo, pageable);
+        ReminderPageResponse result = reminderService.getAllReminders(search, dateFrom, dateTo, sortBy, direction, page, size);
 
         verify(provider).getUser_id();
         verify(repo).findAll(any(Specification.class), any(Pageable.class));

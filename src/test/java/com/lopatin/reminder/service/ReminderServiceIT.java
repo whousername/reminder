@@ -14,8 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -118,10 +116,10 @@ class ReminderServiceIT {
                 .status(ReminderStatus.PENDING)
                 .build();
 
-        Sort sort = Sort.by("title").ascending();
+        String sortBy = "title";
+        String direction = "asc";
         int page = 0;
         int size = 2;
-        PageRequest pageable = PageRequest.of(page, size, sort);
 
         reminderRepository.save(reminder1);
         reminderRepository.save(reminder2);
@@ -129,7 +127,7 @@ class ReminderServiceIT {
         when(userProvider.getUser_id()).thenReturn(userId);
 
         ReminderPageResponse result = service
-                .getAllReminders(null, null, null, pageable);
+                .getAllReminders(null, null, null, sortBy, direction, page, size);
 
         assertThat(result.current()).hasSize(1);
         assertThat(result.current().getFirst().user_id()).isEqualTo(userId);
@@ -150,10 +148,10 @@ class ReminderServiceIT {
                 .status(ReminderStatus.PENDING)
                 .build();
 
-        Sort sort = Sort.by("title").ascending();
+        String sortBy = "title";
+        String direction = "asc";
         int page = 0;
         int size = 2;
-        PageRequest pageable = PageRequest.of(page, size, sort);
 
         reminderRepository.save(reminder1);
         reminderRepository.save(reminder2);
@@ -161,7 +159,8 @@ class ReminderServiceIT {
         when(userProvider.getUser_id()).thenReturn(userId);
 
         ReminderPageResponse result = service
-                .getAllReminders("Test1", null, null, pageable);
+                .getAllReminders("Test1", null, null, sortBy, direction, page, size);
+
 
         assertThat(result.current()).hasSize(1);
         assertThat(result.current().getFirst().title()).isEqualTo("Test1");
@@ -182,10 +181,10 @@ class ReminderServiceIT {
                 .status(ReminderStatus.PENDING)
                 .build();
 
-        Sort sort = Sort.by("title").ascending();
+        String sortBy = "title";
+        String direction = "asc";
         int page = 0;
         int size = 2;
-        PageRequest pageable = PageRequest.of(page, size, sort);
 
         LocalDate dateFrom = LocalDate.parse("2033-03-27");
         LocalDate dateTo = LocalDate.parse("2036-03-27");
@@ -196,7 +195,8 @@ class ReminderServiceIT {
         when(userProvider.getUser_id()).thenReturn(userId);
 
         ReminderPageResponse result = service
-                .getAllReminders(null, dateFrom, dateTo, pageable);
+                .getAllReminders(null, dateFrom, dateTo, sortBy, direction, page, size);
+
 
         assertThat(result.current()).hasSize(1);
         assertThat(result.current().getFirst().remind()).isEqualTo(LocalDateTime.parse("2035-03-27T13:31:10"));
