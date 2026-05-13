@@ -5,6 +5,9 @@ telegram:
   bot:
     username: ${TELEGRAM_BOT_USERNAME}
     token: ${TELEGRAM_BOT_TOKEN}
+    list:
+      page: 0
+      size: 20
 
 logging:
   level:
