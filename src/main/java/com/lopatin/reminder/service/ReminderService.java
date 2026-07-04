@@ -120,7 +120,11 @@ public class ReminderService {
     }
 
 
-    //перегрузка для бота
+    /**
+     * Bot-facing overload: accepts
+     explicit userId instead of reading
+     from security context.
+     */
     public List<ReminderResponse> getAllReminders(UUID userId, Pageable pageable){
         return reminderRepo
                 .findAllByUserIdAndStatus(userId, pageable, ReminderStatus.PENDING)

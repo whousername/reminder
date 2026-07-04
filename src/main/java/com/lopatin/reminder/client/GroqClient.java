@@ -6,6 +6,8 @@ import com.lopatin.reminder.config.GroqProperties;
 import com.lopatin.reminder.exception.GroqClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpException;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -13,6 +15,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+@Component
 public class GroqClient {
 
     private final ObjectMapper mapper;

@@ -3,6 +3,7 @@ server:
 
 telegram:
   bot:
+    uri: https://api.telegram.org/bot
     username: ${TELEGRAM_BOT_USERNAME}
     token: ${TELEGRAM_BOT_TOKEN}
     list:
@@ -14,7 +15,9 @@ logging:
     root: INFO
     com.lopatin.reminder: DEBUG
     org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.security: DEBUG
+
 
 groq:
   api-key: ${GROQ_API_KEY}
@@ -26,16 +29,20 @@ spring:
     name: Reminder Application
 
 
+
   datasource:
     username: reminder_user
     password: reminder_pass
 
 
+
   jpa:
+    show-sql: true # показывать SQL в консоли
     hibernate:
       ddl-auto: validate
       properties:
         hibernate:
+          format_sql: true
           jdbc:
             time_zone: UTC
 
