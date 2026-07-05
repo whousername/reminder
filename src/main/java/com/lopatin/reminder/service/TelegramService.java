@@ -1,0 +1,54 @@
+package com.lopatin.reminder.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lopatin.reminder.api.request.TelegramRequest;
+import com.lopatin.reminder.config.TelegramProperties;
+import com.lopatin.reminder.exception.TelegramServiceException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpException;
+import org.springframework.stereotype.Service;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class TelegramService {
+
+    private final HttpClient httpClient;
+    private final TelegramProperties props;
+    private final ObjectMapper mapper;
+
+    public void sendTelegram(String chatId, String message) {
+
+        log.info("Sending Telegram-notification to chatId={}", chatId);
+
+        try {
+
+            String body = mapper
+                    .writeValueAsString(new TelegramRequest(chatId, message));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(props.getUri() + props.getToken() + "/sendMessage"))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .timeout(Duration.ofSeconds(5))
+                    .build();
+
+            HttpResponse<String> response = httpClient
+                    .send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                throw new HttpException("Http error, response status code: " + response.body());
+            }
+
+        } catch (Exception e) {
+            throw new TelegramServiceException("Failed to send Telegram message: ", e);
+
+        }
+    }
+}

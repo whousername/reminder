@@ -1,0 +1,34 @@
+telegram:
+  bot:
+    username: test
+    token: test
+
+spring:
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    enabled: true
+    contexts: test
+
+
+  security:
+    oauth2:
+      resource server:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/reminder
+
+
+  quartz:
+    auto-startup: false
+
+  mail:
+    username: test
+    password: test
+

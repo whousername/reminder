@@ -1,0 +1,311 @@
+
+# Reminder Application
+
+Backend REST API для управления напоминаниями.
+Тестовое задание на позицию Java Developer.
+
+---
+
+## Tech Stack
+
+- Java 21
+- Spring Boot
+- Spring Web (REST)
+- Spring Data JPA (Hibernate)
+- PostgreSQL
+- Liquibase
+- Spring Security (OAuth2)
+- Gradle
+- Docker / Docker Compose
+- JUnit / Mockito
+- Quartz Scheduler
+- GroqCloud
+- Telegram Bot API - as a frontend
+
+---
+
+## Functional Overview
+
+Приложение позволяет:
+- создавать напоминания
+- редактировать напоминания
+- удалять напоминания
+- получать список напоминаний с пагинацией
+- выполнять поиск / сортировку / фильтрацию
+- отправлять уведомления (email / telegram)
+- отслеживать статус выполнения задачи (прогресс: CREATED / IN_PROGRESS / DONE)
+- управлять всеми функциями API /командами из Телеграм-бота
+- создавать напоминания написанием задачи в свободной форме по команде /ai из Телеграм-бота
+---
+
+## Telegram Bot Frontend
+
+` Telegram bot acts as the application frontend.
+  All API features are available through bot
+  commands without using a REST client.`
+
+  ### Available Commands
+
+-  /create - Create a reminder step by step
+
+  - /list - Get list of reminders
+
+- /edit - Edit a reminder by ID
+
+- /delete - Delete a reminder by ID
+
+- /ai - Create a reminder in free-form text
+
+- /progress - Change reminder progress status (CREATED / IN_PROGRESS / DONE)
+
+- /back - Cancel current action
+
+  ---
+## AI Reminder Parsing (GroqCloud)
+
+  The `/ai` command allows creating a reminder by
+  typing a task in free-form text.
+  The message is sent to GroqCloud (LLM API), which
+  extracts `title`, `description` and datetime.
+  The time is automatically converted from the
+  user's timezone to UTC before saving.
+
+  **Example:** `remind me to buy milk tomorrow at
+  10am`
+
+## Domain Model
+### Reminder
+
+| Field       | Type           | Description                    |
+|------------|----------------|---------------------------------|
+| id         | bigint         | Unique identifier               |
+| title      | varchar(255)   | Short title                     |
+| description| varchar(4096)  | Full description                |
+| remind_at  | timestamp      | Reminder date and time (ISO)    |
+| user_id    | uuid           | Owner user id (Keycloak Id)     |
+| status     | varchar        | PENDING, PARTIALLY_SENT, SENT, FAILED, USER_COMPLETE |
+| progress   | varchar        | CREATED, IN_PROGRESS, DONE           |
+
+---
+### UserSettings
+| Field          | Type            | Description                 |
+|----------------|-----------------|---------------------------
+| userId         | varchar         | Owner user id (Keycloak Id) |
+| telegramChatId | varchar         | User Telegram chat-id       |
+| linkToken      | varchar         | Link token (deep-link)      |
+| email          | varchar         | User email                  |
+
+---
+
+
+
+## API Endpoints
+
+> **Note:** All endpoints require a valid JWT token from Keycloak. Use the curl command below to obtain a token.
+
+### Telegram Bot linking
+1. GET /api/v1/settings/telegram-link — get the link
+2. Follow the link in Telegram
+3. Click Start — the bot will automatically link your chat ID
+
+
+### Create reminder
+POST /api/v1/reminder/create
+Request body:
+```json
+{
+  "title": "Test reminder",
+  "description": "Description",
+  "remind": "2026-02-27T10:00:00"
+}
+Response:
+{
+  "id":21,
+  "title": "Test reminder",
+  "description": "Description",
+  "remind": "2026-02-27T10:00:00",
+  "user_id": "47dd73a8-724c-432b-ade8-69dc1f512a92"
+}
+```
+
+PATCH /api/v1/reminder/{id}
+
+PATCH /api/v1/reminder/progress/{id}
+
+GET /api/v1/settings/telegram-link
+
+GET /api/v1/reminder/list
+
+DELETE /api/v1/reminder/remove/{id}
+
+## API Documentation
+Full API documentation available via Swagger UI after running the application:
+http://localhost:8080/swagger-ui.html
+
+## **Keycloak / Authentication**
+
+-   **Realm**  ups automatically with start application by docker-compose.
+
+-   Realm has 2 test users (test_user1, test_user2).
+
+-   For manual testing API need to get JWT token first.
+
+### Test Users
+- `test_user1` / `test_password1` (There are 20 test-reminders for this user uploading from csv-file for testing API.)
+
+### Getting JWT from "app-1" Docker-container (for test_user1)
+> **Note:** client_secret is for local test environment only, generated automatically by docker-compose.
+```
+curl -X POST "http://keycloak:8080/realms/reminder/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=reminder-api" \
+  -d "client_secret=lDhUrEuVR5yVC8QizaqGN3zOYxw4484o" \
+  -d "username=test_user1" \
+  -d "password=test_password1"
+  ```
+
+
+### Admin console
+```
+http://localhost:8081/admin/master/console/
+```
+
+## Scheduler & Notifications
+
+### Quartz Scheduler
+- Handles reminder tasks via `ReminderJob` and `ReminderSchedulerService`.
+- Tables created with Liquibase changelog `v1-002-create-quartz-tables.xml`.
+- Misfire handling: tasks delayed >5 min are marked `FAILED`.
+- Reminders with progress `DONE` are skipped and marked `USER_COMPLETE` instead of sending a notification.
+
+### Notifications
+- `NotificationService` sends notifications from Quartz jobs.
+- Supports:
+  - **Telegram**: via `TelegramService` + `ReminderBot` and `UserSettings`.
+  - **Email**: via `MailService`, updates status.
+  -  **Notification statuses**: `PENDING`, `PARTIALLY_SENT`, `SENT`, `FAILED`
+
+### Time Handling
+
+-  **All times are stored and processed in UTC. Enter times in UTC in Swagger or API requests to trigger reminders correctly.**
+- `CreateReminderRequest` uses `OffsetDateTime`, converted to UTC when mapped.
+- Swagger shows UTC; testing must use UTC to trigger reminders correctly.
+
+### Logging
+- Logs key events: job execution, sending notifications, errors/statuses.
+
+
+## Error Handling
+
+All exceptions are handled globally via `@RestControllerAdvice`.
+
+| Status | Cause |
+|--------|-------|
+| 400    | Validation failed or invalid request body |
+| 404    | Reminder or UserSettings not found |
+| 500    | Unexpected server error |
+
+All error responses follow the format:
+```json
+{
+  "message": "Reminder not found: 5",
+  "status": 404
+}
+```
+- Input validation is enforced on `CreateReminderRequest` and `UpdateDto`
+  via Bean Validation (`@NotBlank`, `@NotNull`, `@Future`, `@Size`).
+
+
+
+
+## Project Structure Skeleton
+```
+  src/main/java
+   ├── api
+   │    ├── controller
+   │    ├── request
+   │    └── response
+   ├── bot
+   ├── config
+   ├── exception
+   ├── mapper
+   ├── model
+   ├── repo
+   ├── scheduler
+   └── service
+        └── specification
+
+ ```
+
+
+## Database & Migrations
+
+- PostgreSQL
+- Schema managed via Liquibase
+- All changes applied automatically on application startup
+- Test data loaded via CSV
+
+## Configuration
+
+Profiles:
+
+  - local — run from IDE
+  - docker — run inside Docker container
+  - test - testing enviroment
+
+Key configs:
+
+  - Database connection
+  - Liquibase migrations
+  - Server port
+  - Security / OAuth2 JWT
+
+  ## Environment Setup
+
+  Create `.env` file in root directory based on `.env.example`:
+
+  - `TELEGRAM_BOT_TOKEN` — get from @BotFather in Telegram
+  - `TELEGRAM_BOT_USERNAME` — your bot username without @
+  - `MAIL_USERNAME` — Mailtrap username (recommended for testing)
+  - `MAIL_PASSWORD` — Mailtrap password
+
+##  Build & Run
+
+### Build application
+    ./gradlew clean build
+
+###  Build image with Docker
+    docker build -t reminder-app:latest .
+
+### Run with Docker
+    docker-compose up -d
+
+### Application will be available at:
+    http://localhost:8080
+
+### Manual API Test (CURL)
+```
+curl -X POST http://localhost:8080/api/v1/reminder/create \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <access_token>" \
+     -d '{
+        "title": "Test reminder",
+        "description": "Description",
+        "remind": "2026-02-27T10:00:00"
+        }'
+```
+
+## Tests:
+- Full coverage unit tests for service layer (JUnit + Mockito)
+- Full coverage integration tests for Service + DB + Migrations (SpringBootTest, Testcontainers)
+
+
+## Architecture Notes
+
+- Layered architecture: Controller → Service → Repository
+- DTOs are used to isolate API from persistence model
+- Database schema managed strictly via Liquibase
+- Hibernate ddl-auto: validate
+- Auto-increment handled on DB side (PostgreSQL sequence)
+- Initial test data loaded via Liquibase loadData

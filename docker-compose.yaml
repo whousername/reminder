@@ -1,0 +1,72 @@
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: reminder-postgres
+    environment:
+      POSTGRES_DB: reminder
+      POSTGRES_USER: reminder_user
+      POSTGRES_PASSWORD: reminder_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - reminder_postgres_data:/var/lib/postgresql/data
+
+
+  postgres-2:
+    image: postgres:16
+    container_name: reminder-keycloak-postgres
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak_user
+      POSTGRES_PASSWORD: keycloak_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgresql/data
+
+  keycloak:
+    hostname: keycloak
+    image: quay.io/keycloak/keycloak:26.4.5
+    container_name: keycloak
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak/import:/opt/keycloak/data/import
+    ports:
+      - "8081:8080"
+    environment:
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      - KC_PROXY=edge
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=postgres-2
+      - KC_DB_URL_PORT=5432
+      - KC_DB_USERNAME=keycloak_user
+      - KC_DB_PASSWORD=keycloak_pass
+
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=reminder_admin
+    depends_on:
+      - postgres-2
+
+  app:
+    build: .
+    image: reminder-app:latest
+    depends_on:
+      - postgres
+      - keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - ./secrets.env
+
+
+volumes:
+  reminder_postgres_data:
+  keycloak_postgres_data:
+
+

@@ -1,3 +1,91 @@
+server:
+  port: 8080
+
+telegram:
+  bot:
+    uri: https://api.telegram.org/bot
+    username: ${TELEGRAM_BOT_USERNAME}
+    token: ${TELEGRAM_BOT_TOKEN}
+    list:
+      page: 0
+      size: 20
+
+logging:
+  level:
+    root: INFO
+    com.lopatin.reminder: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+    org.springframework.security: DEBUG
+
+
+groq:
+  api-key: ${GROQ_API_KEY}
+  model: llama-3.3-70b-versatile
+  uri: https://api.groq.com/openai/v1/chat/completions
+
 spring:
   application:
     name: Reminder Application
+
+
+
+  datasource:
+    username: reminder_user
+    password: reminder_pass
+
+
+
+  jpa:
+    show-sql: true # показывать SQL в консоли
+    hibernate:
+      ddl-auto: validate
+      properties:
+        hibernate:
+          format_sql: true
+          jdbc:
+            time_zone: UTC
+
+
+  liquibase:
+    enabled: true
+    change-log: db/changelog/master-changelog.xml
+    contexts: prod
+
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: reminder-scheduler
+          threadPool:
+            threadCount: 5
+          jobStore:
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            useProperties: true
+
+
+  springdoc:
+    swagger-ui:
+      path: /swagger-ui.html
+    api-docs:
+      path: /v3/api-docs
+
+
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+

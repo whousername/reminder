@@ -1,0 +1,39 @@
+package com.lopatin.reminder.mapper;
+
+import com.lopatin.reminder.api.request.CreateReminderRequest;
+import com.lopatin.reminder.api.response.ReminderResponse;
+import com.lopatin.reminder.model.Reminder;
+import com.lopatin.reminder.model.ReminderProgress;
+import com.lopatin.reminder.model.ReminderStatus;
+import org.springframework.stereotype.Component;
+
+import java.time.ZoneOffset;
+import java.util.UUID;
+
+
+@Component
+public class ReminderMapper {
+
+    public ReminderResponse entityToResponse(Reminder savedEntity) {
+        return new ReminderResponse(
+                savedEntity.getId(),
+                savedEntity.getTitle(),
+                savedEntity.getDescription(),
+                savedEntity.getRemind(),
+                savedEntity.getUserId(),
+                savedEntity.getProgress()
+        );
+    }
+    public Reminder dtoToEntity(CreateReminderRequest request, UUID user_id) {
+        return new Reminder(
+                null,
+                request.title(),
+                request.description(),
+                request.remind().withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime(),
+                user_id,
+                ReminderStatus.PENDING,
+                ReminderProgress.CREATED
+        );
+    }
+
+}
