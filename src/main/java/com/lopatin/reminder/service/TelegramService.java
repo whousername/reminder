@@ -33,7 +33,7 @@ public class TelegramService {
                     .writeValueAsString(new TelegramRequest(chatId, message));
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.telegram.org/bot" + props.getToken() + "/sendMessage"))
+                    .uri(URI.create(props.getUri() + props.getToken() + "/sendMessage"))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .timeout(Duration.ofSeconds(5))

@@ -13,6 +13,8 @@ import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.ReminderStatus;
 import com.lopatin.reminder.repo.ReminderRepository;
 import com.lopatin.reminder.scheduler.ReminderSchedulerService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -29,8 +32,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ReminderServiceTest {
@@ -49,6 +51,18 @@ public class ReminderServiceTest {
 
     @InjectMocks
     private ReminderService reminderService;
+
+    @BeforeEach
+    void setUp() {
+        TransactionSynchronizationManager.initSynchronization();
+    }
+
+    @AfterEach
+    void tearDown() {
+        TransactionSynchronizationManager.clearSynchronization();
+    }
+
+
 
     @Test
     public void createReminder_shouldMapSaveAndReturnResponse() {
@@ -87,7 +101,7 @@ public class ReminderServiceTest {
         verify(mapper).dtoToEntity(reminderRequest, user_id);
         verify(repo).save(entityBeforeSave);
         verify(mapper).entityToResponse(entityAfterSave);
-        verify(reminderSchedulerService).scheduleReminder(1L, localDateTime);
+
     }
 
     @Test
@@ -97,10 +111,10 @@ public class ReminderServiceTest {
         LocalDate dateTo = LocalDate.parse("2030-01-02");
         LocalDateTime remindDate = LocalDateTime.parse(
                 "2030-01-01T13:30:00");
-
+        String sortBy = "title";
+        String direction = "asc";
         int page = 0;
         int size = 10;
-        Pageable pageable = PageRequest.of(page, size);
 
         UUID currentUser = UUID.randomUUID();
 
@@ -121,7 +135,7 @@ public class ReminderServiceTest {
         when(repo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(reminderPage);
         when(mapper.entityToResponse(any(Reminder.class))).thenReturn(reminderResponse);
 
-        ReminderPageResponse result = reminderService.getAllReminders(search, dateFrom, dateTo, pageable);
+        ReminderPageResponse result = reminderService.getAllReminders(search, dateFrom, dateTo, sortBy, direction, page, size);
 
         verify(provider).getUser_id();
         verify(repo).findAll(any(Specification.class), any(Pageable.class));

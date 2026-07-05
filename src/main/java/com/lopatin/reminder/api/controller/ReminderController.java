@@ -53,13 +53,8 @@ public class ReminderController {
 
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Sort sort = direction.equals("asc") ?
-                Sort.by(sortBy).ascending() :
-                Sort.by(sortBy).descending();
 
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        return reminderService.getAllReminders(search, dateFrom, dateTo, pageable);
+        return reminderService.getAllReminders(search, dateFrom, dateTo, sortBy, direction, page, size);
     }
 
 

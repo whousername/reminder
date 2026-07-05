@@ -8,6 +8,7 @@ import com.lopatin.reminder.model.ReminderProgress;
 import com.lopatin.reminder.model.UserSettings;
 import com.lopatin.reminder.repo.UserSettingsRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,12 @@ public class BotReminderService {
     private final UserSettingsRepository userSettingsRepository;
     private final ReminderService reminderService;
     private final UserSettingsService userSettingsService;
+
+    @Value("${telegram.bot.list.page}")
+    private int defaultPage;
+    @Value("${telegram.bot.list.size}")
+    private int defaultSize;
+
 
 
     public BotReminderService(UserSettingsRepository userSettingsRepository,
@@ -53,9 +60,8 @@ public class BotReminderService {
 
 
     public List<ReminderResponse> getList(Long chatId) {
-        int page = 0;
-        int size = 10;
-        Pageable pageable = PageRequest.of(page, size);
+
+        Pageable pageable = PageRequest.of(defaultPage, defaultSize);
 
         UUID userId = getUserIdFromChatId(chatId);
         return reminderService.getAllReminders(userId, pageable);

@@ -10,4 +10,5 @@ import org.springframework.stereotype.Component;
 public class GroqProperties {
     private String apiKey;
     private String model;
+    private String uri;
 }

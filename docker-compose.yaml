@@ -38,6 +38,8 @@ services:
     environment:
       - KC_HOSTNAME_STRICT=false
       - KC_HTTP_ENABLED=true
+      - KC_PROXY=edge
+      - KC_HOSTNAME_STRICT_HTTPS=false
       - KC_DB=postgres
       - KC_DB_URL_HOST=postgres-2
       - KC_DB_URL_PORT=5432

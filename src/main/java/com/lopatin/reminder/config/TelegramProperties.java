@@ -12,5 +12,6 @@ public class TelegramProperties {
 
     private String token;
     private String username;
+    private String uri;
 
 }
